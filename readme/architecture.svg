@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 620" role="img" aria-labelledby="title desc">
+  <title id="title">iTriangle architecture overview</title>
+  <desc id="desc">Input contours are normalized, sweep-line triangulated, optionally refined into Delaunay, tessellation, convex decomposition, centroid net, and triangle index outputs.</desc>
+  <defs>
+    <filter id="cardShadow" x="-12%" y="-18%" width="124%" height="136%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#111827" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrowBlue" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+      <path d="M1 1 L13 7 L1 13 L4.4 7 Z" fill="#4f7cff"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+      <path d="M1 1 L13 7 L1 13 L4.4 7 Z" fill="#0f9f8f"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+      <path d="M1 1 L13 7 L1 13 L4.4 7 Z" fill="#e9851d"/>
+    </marker>
+    <marker id="arrowRose" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="11" markerHeight="11" orient="auto-start-reverse">
+      <path d="M1 1 L13 7 L1 13 L4.4 7 Z" fill="#d84c79"/>
+    </marker>
+    <style>
+      .node {
+        filter: url(#cardShadow);
+        stroke: rgba(15, 23, 42, 0.20);
+        stroke-width: 1.5;
+      }
+      .node-title {
+        fill: #111827;
+        font: 700 18px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .node-subtitle {
+        fill: #334155;
+        font: 600 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .label {
+        fill: #1f2937;
+        font: 700 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .label-bg {
+        fill: rgba(255, 255, 255, 0.92);
+        stroke: rgba(15, 23, 42, 0.12);
+      }
+      .arrow-halo {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.92);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 10;
+      }
+      .arrow {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 3.5;
+      }
+      .blue { stroke: #4f7cff; }
+      .teal { stroke: #0f9f8f; }
+      .amber { stroke: #e9851d; }
+      .rose { stroke: #d84c79; }
+    </style>
+  </defs>
+
+  <g id="arrows">
+    <path class="arrow-halo" d="M240 106 H300"/>
+    <path class="arrow blue" marker-end="url(#arrowBlue)" d="M240 106 H300"/>
+
+    <path class="arrow-halo" d="M520 106 H590"/>
+    <path class="arrow blue" marker-end="url(#arrowBlue)" d="M520 106 H590"/>
+
+    <path class="arrow-halo" d="M700 142 V210"/>
+    <path class="arrow blue" marker-end="url(#arrowBlue)" d="M700 142 V210"/>
+
+    <path class="arrow-halo" d="M700 282 V360"/>
+    <path class="arrow teal" marker-end="url(#arrowTeal)" d="M700 282 V360"/>
+
+    <path class="arrow-halo" d="M810 246 H830"/>
+    <path class="arrow amber" marker-end="url(#arrowAmber)" d="M810 246 H830"/>
+
+    <path class="arrow-halo" d="M590 387 C560 346 548 346 520 386"/>
+    <path class="arrow rose" marker-end="url(#arrowRose)" d="M590 387 C560 346 548 346 520 386"/>
+
+    <path class="arrow-halo" d="M520 430 C552 462 562 462 590 428"/>
+    <path class="arrow rose" marker-end="url(#arrowRose)" d="M520 430 C552 462 562 462 590 428"/>
+
+    <path class="arrow-halo" d="M700 432 V510"/>
+    <path class="arrow teal" marker-end="url(#arrowTeal)" d="M700 432 V510"/>
+
+    <path class="arrow-halo" d="M810 404 C858 430 880 466 892 510"/>
+    <path class="arrow teal" marker-end="url(#arrowTeal)" d="M810 404 C858 430 880 466 892 510"/>
+
+    <path class="arrow-halo" d="M810 386 C878 352 887 292 830 256"/>
+    <path class="arrow amber" marker-end="url(#arrowAmber)" d="M810 386 C878 352 887 292 830 256"/>
+  </g>
+
+  <g id="labels">
+    <rect class="label-bg" x="720" y="306" width="82" height="28" rx="14"/>
+    <text class="label" x="761" y="320">Delaunay</text>
+
+    <rect class="label-bg" x="502" y="342" width="98" height="28" rx="14"/>
+    <text class="label" x="551" y="356">Tessellation</text>
+  </g>
+
+  <g id="nodes">
+    <g transform="translate(60 70)">
+      <rect class="node" width="180" height="72" rx="16" fill="#d7e8ff"/>
+      <text class="node-title" x="90" y="29">Input</text>
+      <text class="node-subtitle" x="90" y="51">contours</text>
+    </g>
+
+    <g transform="translate(300 70)">
+      <rect class="node" width="220" height="72" rx="16" fill="#ddf7ee"/>
+      <text class="node-title" x="110" y="28">Normalize</text>
+      <text class="node-subtitle" x="110" y="51">fix intersections</text>
+    </g>
+
+    <g transform="translate(590 70)">
+      <rect class="node" width="220" height="72" rx="16" fill="#ffe8c7"/>
+      <text class="node-title" x="110" y="28">Sweep-line</text>
+      <text class="node-subtitle" x="110" y="51">triangulation</text>
+    </g>
+
+    <g transform="translate(590 210)">
+      <rect class="node" width="220" height="72" rx="16" fill="#f1e4ff"/>
+      <text class="node-title" x="110" y="28">Raw</text>
+      <text class="node-subtitle" x="110" y="51">triangulation</text>
+    </g>
+
+    <g transform="translate(590 360)">
+      <rect class="node" width="220" height="72" rx="16" fill="#dbf7ff"/>
+      <text class="node-title" x="110" y="28">Delaunay</text>
+      <text class="node-subtitle" x="110" y="51">triangulation</text>
+    </g>
+
+    <g transform="translate(300 360)">
+      <rect class="node" width="220" height="72" rx="16" fill="#ffe0ec"/>
+      <text class="node-title" x="110" y="28">Adaptive</text>
+      <text class="node-subtitle" x="110" y="51">refinement</text>
+    </g>
+
+    <g transform="translate(590 510)">
+      <rect class="node" width="220" height="72" rx="16" fill="#e5f8d8"/>
+      <text class="node-title" x="110" y="28">Convex</text>
+      <text class="node-subtitle" x="110" y="51">decomposition</text>
+    </g>
+
+    <g transform="translate(830 510)">
+      <rect class="node" width="170" height="72" rx="16" fill="#ffedd5"/>
+      <text class="node-title" x="85" y="28">Centroid</text>
+      <text class="node-subtitle" x="85" y="51">net</text>
+    </g>
+
+    <g transform="translate(830 210)">
+      <rect class="node" width="170" height="72" rx="16" fill="#ede9fe"/>
+      <text class="node-title" x="85" y="28">Triangles</text>
+      <text class="node-subtitle" x="85" y="51">and indices</text>
+    </g>
+  </g>
+</svg>

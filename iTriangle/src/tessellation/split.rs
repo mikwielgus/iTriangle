@@ -1,26 +1,31 @@
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::uint::UIntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
 
-pub trait SliceContour {
-    fn slice_contour(&self, max_edge_length: u32) -> Self;
+pub trait SliceContour<I: IntNumber> {
+    fn slice_contour(&self, max_edge_length: I::WideUInt) -> Self;
 }
 
-const SCALE: u32 = 29;
-
-impl SliceContour for IntContour {
+impl<I: IntNumber> SliceContour<I> for IntContour<I> {
     #[inline]
-    fn slice_contour(&self, max_edge_length: u32) -> Self {
+    fn slice_contour(&self, max_edge_length: I::WideUInt) -> Self {
         let mut a = if let Some(last) = self.last() {
             *last
         } else {
             return Vec::new();
         };
 
-        let radius = max_edge_length as u64;
-        let sqr_radius = radius.pow(2);
+        let radius = max_edge_length;
+        if radius > I::WideUInt::HALF_MASK {
+            return self.clone();
+        }
 
-        let mut contour = IntContour::with_capacity(2 * self.len());
+        let sqr_radius = radius * radius;
+
+        let mut contour = IntContour::<I>::with_capacity(2 * self.len());
 
         for &b in self.iter() {
             extract(a, b, radius, sqr_radius, &mut contour);
@@ -31,9 +36,9 @@ impl SliceContour for IntContour {
     }
 }
 
-impl SliceContour for IntShape {
+impl<I: IntNumber> SliceContour<I> for IntShape<I> {
     #[inline]
-    fn slice_contour(&self, max_edge_length: u32) -> Self {
+    fn slice_contour(&self, max_edge_length: I::WideUInt) -> Self {
         let mut shape = Vec::with_capacity(self.len());
 
         for contour in self.iter() {
@@ -44,9 +49,9 @@ impl SliceContour for IntShape {
     }
 }
 
-impl SliceContour for IntShapes {
+impl<I: IntNumber> SliceContour<I> for IntShapes<I> {
     #[inline]
-    fn slice_contour(&self, max_edge_length: u32) -> Self {
+    fn slice_contour(&self, max_edge_length: I::WideUInt) -> Self {
         let mut shapes = Vec::with_capacity(self.len());
 
         for shape in self.iter() {
@@ -58,15 +63,21 @@ impl SliceContour for IntShapes {
 }
 
 #[inline]
-fn extract(a: IntPoint, b: IntPoint, radius: u64, sqr_radius: u64, contour: &mut IntContour) {
-    let ab = b.subtract(a);
-    let sqr_len = ab.sqr_length() as u64;
+fn extract<I: IntNumber>(
+    a: IntPoint<I>,
+    b: IntPoint<I>,
+    radius: I::WideUInt,
+    sqr_radius: I::WideUInt,
+    contour: &mut IntContour<I>,
+) {
+    let ab = b - a;
+    let sqr_len = ab.sqr_length().to_uint();
     if sqr_len <= sqr_radius {
         contour.push(b);
         return;
     }
-    let len = sqr_len.isqrt();
-    let n = ((len + (radius >> 1)) / radius) as i64;
+    let len = i_overlay::i_float::float::number::FloatNumber::sqrt(sqr_len.to_f64());
+    let n = ((len + 0.5 * radius.to_f64()) / radius.to_f64()) as usize;
 
     if n <= 1 {
         contour.push(b);
@@ -74,26 +85,19 @@ fn extract(a: IntPoint, b: IntPoint, radius: u64, sqr_radius: u64, contour: &mut
     }
 
     if n == 2 {
-        let x = ((a.x as i64 + b.x as i64) / 2) as i32;
-        let y = ((a.y as i64 + b.y as i64) / 2) as i32;
+        let x = I::from_wide((a.x.wide() + b.x.wide()) / I::Wide::TWO);
+        let y = I::from_wide((a.y.wide() + b.y.wide()) / I::Wide::TWO);
 
         contour.push(IntPoint::new(x, y));
         contour.push(b);
         return;
     }
 
-    let sx = (ab.x << SCALE) / n;
-    let sy = (ab.y << SCALE) / n;
-
-    let mut dx = 0i64;
-    let mut dy = 0i64;
-
-    for _ in 1..n {
-        dx += sx;
-        dy += sy;
-
-        let x = a.x + (dx >> SCALE) as i32;
-        let y = a.y + (dy >> SCALE) as i32;
+    let n_w = I::Wide::from_usize(n);
+    for i in 1..n {
+        let i_w = I::Wide::from_usize(i);
+        let x = I::from_wide(a.x.wide() + ab.x * i_w / n_w);
+        let y = I::from_wide(a.y.wide() + ab.y * i_w / n_w);
 
         contour.push(IntPoint::new(x, y));
     }
@@ -115,19 +119,19 @@ mod tests {
             IntPoint::new(0, 10),
         ];
 
-        let s0 = contour.slice_contour(8);
+        let s0 = contour.slice_contour(8u64);
         assert_eq!(s0.len(), 4);
 
-        let s1 = contour.slice_contour(7);
+        let s1 = contour.slice_contour(7u64);
         assert_eq!(s1.len(), 4);
 
-        let s2 = contour.slice_contour(6);
+        let s2 = contour.slice_contour(6u64);
         assert_eq!(s2.len(), 8);
 
-        let s3 = contour.slice_contour(5);
+        let s3 = contour.slice_contour(5u64);
         assert_eq!(s3.len(), 8);
 
-        let s4 = contour.slice_contour(3);
+        let s4 = contour.slice_contour(3u64);
         assert_eq!(s4.len(), 12);
     }
 }

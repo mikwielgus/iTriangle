@@ -1,13 +1,14 @@
 use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay::IntOverlayOptions;
+use i_overlay::i_float::int::number::int::IntNumber;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Validation {
+pub struct Validation<I: IntNumber> {
     pub fill_rule: FillRule,
-    pub options: IntOverlayOptions,
+    pub options: IntOverlayOptions<I::WideUInt>,
 }
 
-impl Validation {
+impl<I: IntNumber> Validation<I> {
     pub fn with_fill_rule(fill_rule: FillRule) -> Self {
         Self {
             fill_rule,
@@ -16,7 +17,7 @@ impl Validation {
     }
 }
 
-impl Default for Validation {
+impl<I: IntNumber> Default for Validation<I> {
     fn default() -> Self {
         Self {
             fill_rule: FillRule::NonZero,

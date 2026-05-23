@@ -10,26 +10,31 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::mem::swap;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::triangle::Triangle;
 use i_overlay::i_shape::util::reserve::Reserve;
 use i_tree::set::list::SetList;
 use i_tree::set::sort::SetCollection;
 use i_tree::set::tree::SetTree;
 
-struct NetBuilder<'a> {
-    triangulation: &'a mut RawIntTriangulation,
+struct NetBuilder<'a, I: IntNumber> {
+    triangulation: &'a mut RawIntTriangulation<I>,
     phantom_store: PhantomEdgePool,
 }
 
-pub(crate) trait NetTriangulation {
-    fn net_triangulate_into(&self, triangles_count: usize, triangulation: &mut RawIntTriangulation);
-}
-
-impl NetTriangulation for [ChainVertex] {
+pub(crate) trait NetTriangulation<I: IntNumber> {
     fn net_triangulate_into(
         &self,
         triangles_count: usize,
-        triangulation: &mut RawIntTriangulation,
+        triangulation: &mut RawIntTriangulation<I>,
+    );
+}
+
+impl<I: IntNumber> NetTriangulation<I> for [ChainVertex<I>] {
+    fn net_triangulate_into(
+        &self,
+        triangles_count: usize,
+        triangulation: &mut RawIntTriangulation<I>,
     ) {
         triangulation.triangles.reserve_capacity(triangles_count);
         triangulation.triangles.clear();
@@ -47,8 +52,8 @@ impl NetTriangulation for [ChainVertex] {
     }
 }
 
-impl<'a> NetBuilder<'a> {
-    fn new(triangulation: &'a mut RawIntTriangulation) -> Self {
+impl<'a, I: IntNumber> NetBuilder<'a, I> {
+    fn new(triangulation: &'a mut RawIntTriangulation<I>) -> Self {
         Self {
             triangulation,
             phantom_store: PhantomEdgePool::new(),
@@ -56,11 +61,11 @@ impl<'a> NetBuilder<'a> {
     }
 }
 
-impl NetBuilder<'_> {
+impl<I: IntNumber> NetBuilder<'_, I> {
     #[inline]
-    fn triangulate<S: SetCollection<VSegment, Section>>(
+    fn triangulate<S: SetCollection<VSegment<I>, Section<I>>>(
         &mut self,
-        vertices: &[ChainVertex],
+        vertices: &[ChainVertex<I>],
         mut store: S,
     ) {
         for v in vertices.iter() {
@@ -88,9 +93,9 @@ impl NetBuilder<'_> {
     #[inline]
     fn insert_triangle_with_neighbor_link(
         &mut self,
-        edge: &TriangleEdge,
+        edge: &TriangleEdge<I>,
         vertex: usize,
-        mut new_triangle: IntTriangle,
+        mut new_triangle: IntTriangle<I>,
     ) -> usize {
         let new_index = self.next_triangle_index();
         match edge.kind {
@@ -129,7 +134,11 @@ impl NetBuilder<'_> {
     }
 
     #[inline]
-    fn join<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn join<S: SetCollection<VSegment<I>, Section<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         if section.sort.b == v.this {
@@ -140,7 +149,11 @@ impl NetBuilder<'_> {
     }
 
     #[inline]
-    fn start<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn start<S: SetCollection<VSegment<I>, Section<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let section = Section {
             sort: VSegment {
                 a: v.this,
@@ -152,21 +165,29 @@ impl NetBuilder<'_> {
     }
 
     #[inline]
-    fn end<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn end<S: SetCollection<VSegment<I>, Section<I>>>(&mut self, v: &ChainVertex<I>, tree: &mut S) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         section.add_as_last(v, self);
         tree.delete_by_index(index);
     }
 
-    fn split<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn split<S: SetCollection<VSegment<I>, Section<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         let new_section = section.add_to_middle(v, self);
         tree.insert(new_section);
     }
 
-    fn merge<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn merge<S: SetCollection<VSegment<I>, Section<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let prev_index = tree.find_section(v);
         let next_index = tree.index_before(prev_index);
         let next = unsafe { tree.value_by_index_mut(next_index) };
@@ -193,16 +214,20 @@ impl NetBuilder<'_> {
         tree.delete_by_index(next_index);
     }
 
-    fn steiner<S: SetCollection<VSegment, Section>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn steiner<S: SetCollection<VSegment<I>, Section<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         section.add_steiner(v.index_point(), self);
     }
 }
 
-impl Section {
+impl<I: IntNumber> Section<I> {
     #[inline]
-    fn add_as_last(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) {
+    fn add_as_last(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) {
         let edges = match &mut self.content {
             Content::Edges(edges) => edges,
             Content::Point(_) => unreachable!("Section with less then 3 points not possible"),
@@ -229,12 +254,12 @@ impl Section {
     }
 
     #[inline]
-    fn add_to_top(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) {
+    fn add_to_top(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) {
         self.add_from_start(v, net_builder);
     }
 
     #[inline]
-    fn add_to_bottom(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) {
+    fn add_to_bottom(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) {
         self.sort = VSegment {
             a: v.this,
             b: v.next,
@@ -243,7 +268,7 @@ impl Section {
     }
 
     #[inline]
-    fn add_to_middle(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) -> Section {
+    fn add_to_middle(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) -> Section<I> {
         let edges = match &mut self.content {
             Content::Point(point) => {
                 let phantom_index = net_builder.get_unique_phantom_edge_index();
@@ -273,7 +298,7 @@ impl Section {
         while i < edges.len() {
             let ei = &edges[i];
             // skip first not valid triangles
-            if Triangle::is_cw_or_line_point(v.this, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(v.this, ei.a.point, ei.b.point) {
                 i += 1;
                 continue;
             }
@@ -284,9 +309,9 @@ impl Section {
         if i >= edges.len() {
             let last = edges[edges.len() - 1].b;
             let mut index = edges.len();
-            let mut min_dist = vp.point.x - last.point.x;
+            let mut min_dist = vp.point.x.wide() - last.point.x.wide();
             for (ei, e) in edges.iter().enumerate() {
-                let dist = vp.point.x - e.a.point.x;
+                let dist = vp.point.x.wide() - e.a.point.x.wide();
                 if dist < min_dist {
                     min_dist = dist;
                     index = ei;
@@ -360,7 +385,7 @@ impl Section {
         i = 1;
         while i < edges.len() {
             let ei = &edges[i];
-            if Triangle::is_cw_or_line_point(v.this, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(v.this, ei.a.point, ei.b.point) {
                 break;
             }
             let mut triangle = IntTriangle::abc(vp, ei.a, ei.b);
@@ -381,7 +406,7 @@ impl Section {
         top_section
     }
 
-    fn add_from_start(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) {
+    fn add_from_start(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) {
         let vp = v.index_point();
 
         let edges = match &mut self.content {
@@ -397,7 +422,7 @@ impl Section {
 
         let e0 = unsafe { edges.get_unchecked(0) };
 
-        if Triangle::is_cw_or_line_point(v.this, e0.a.point, e0.b.point) {
+        if Triangle::is_cw_or_line(v.this, e0.a.point, e0.b.point) {
             edges.insert(0, TriangleEdge::border(vp, e0.a));
             return;
         }
@@ -408,7 +433,7 @@ impl Section {
         let mut n = 1;
         let mut eb = e0.b;
         for ei in edges.iter().skip(1) {
-            if Triangle::is_cw_or_line_point(vp.point, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(vp.point, ei.a.point, ei.b.point) {
                 break;
             }
             eb = ei.b;
@@ -437,7 +462,7 @@ impl Section {
         );
     }
 
-    fn add_from_end(&mut self, v: &ChainVertex, net_builder: &mut NetBuilder) {
+    fn add_from_end(&mut self, v: &ChainVertex<I>, net_builder: &mut NetBuilder<I>) {
         let vp = v.index_point();
         let edges = match &mut self.content {
             Content::Point(point) => {
@@ -449,7 +474,7 @@ impl Section {
 
         let el = edges.last().unwrap();
 
-        if Triangle::is_cw_or_line_point(v.this, el.a.point, el.b.point) {
+        if Triangle::is_cw_or_line(v.this, el.a.point, el.b.point) {
             edges.push(TriangleEdge::border(el.b, vp));
             return;
         }
@@ -459,7 +484,7 @@ impl Section {
         let mut ea = el.a;
         let mut n = 1;
         for ei in edges.iter().rev().skip(1) {
-            if Triangle::is_cw_or_line_point(v.this, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(v.this, ei.a.point, ei.b.point) {
                 break;
             }
             ea = ei.a;
@@ -477,7 +502,7 @@ impl Section {
     }
 
     #[inline]
-    fn add_steiner(&mut self, vp: IndexPoint, net_builder: &mut NetBuilder) {
+    fn add_steiner(&mut self, vp: IndexPoint<I>, net_builder: &mut NetBuilder<I>) {
         let edges = match &mut self.content {
             Content::Point(point) => {
                 let phantom_index = net_builder.get_unique_phantom_edge_index();
@@ -495,7 +520,7 @@ impl Section {
         while i < edges.len() {
             let ei = &edges[i];
             // skip first not valid triangles
-            if Triangle::is_cw_or_line_point(vp.point, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(vp.point, ei.a.point, ei.b.point) {
                 i += 1;
                 continue;
             }
@@ -505,9 +530,9 @@ impl Section {
         if i >= edges.len() {
             let last = edges[edges.len() - 1].b;
             let mut index = edges.len();
-            let mut min_dist = vp.point.x - last.point.x;
+            let mut min_dist = vp.point.x.wide() - last.point.x.wide();
             for (ei, e) in edges.iter().enumerate() {
-                let dist = vp.point.x - e.a.point.x;
+                let dist = vp.point.x.wide() - e.a.point.x.wide();
                 if dist < min_dist {
                     min_dist = dist;
                     index = ei;
@@ -547,7 +572,7 @@ impl Section {
         i = 1;
         while i < edges.len() {
             let ei = &edges[i];
-            if Triangle::is_cw_or_line_point(vp.point, ei.a.point, ei.b.point) {
+            if Triangle::is_cw_or_line(vp.point, ei.a.point, ei.b.point) {
                 break;
             }
             let mut triangle = IntTriangle::abc(vp, ei.a, ei.b);
@@ -571,16 +596,17 @@ impl Section {
     }
 }
 
-trait FindSection {
-    fn find_section(&self, v: &ChainVertex) -> u32;
+trait FindSection<I: IntNumber> {
+    fn find_section(&self, v: &ChainVertex<I>) -> u32;
 }
 
-impl<C> FindSection for C
+impl<I, C> FindSection<I> for C
 where
-    C: SetCollection<VSegment, Section>,
+    I: IntNumber,
+    C: SetCollection<VSegment<I>, Section<I>>,
 {
     #[inline]
-    fn find_section(&self, v: &ChainVertex) -> u32 {
+    fn find_section(&self, v: &ChainVertex<I>) -> u32 {
         self.first_index_less_by(|s| {
             let point_search = s.is_under_point_order(v.this);
             match point_search {
@@ -588,7 +614,7 @@ where
                     if v.prev == s.a {
                         Ordering::Equal
                     } else {
-                        Triangle::clock_order_point(s.a, v.next, s.b)
+                        Triangle::clock_order(s.a, v.next, s.b)
                     }
                 }
                 _ => point_search,
@@ -615,7 +641,7 @@ mod tests {
     use rand::RngExt;
     use std::collections::HashSet;
 
-    fn path(slice: &[[i32; 2]]) -> IntPath {
+    fn path(slice: &[[i32; 2]]) -> IntPath<i32> {
         slice.iter().map(|p| IntPoint::new(p[0], p[1])).collect()
     }
 
@@ -1547,7 +1573,7 @@ mod tests {
         }
     }
 
-    fn random(radius: i32, n: usize) -> IntPath {
+    fn random(radius: i32, n: usize) -> IntPath<i32> {
         let a = radius / 2;
         let mut points = Vec::with_capacity(n);
         let mut rng = rand::rng();

@@ -1,6 +1,7 @@
 use crate::geom::point::IndexPoint;
 use crate::int::monotone::v_segment::VSegment;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_tree::set::sort::KeyValue;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -9,25 +10,25 @@ pub(crate) enum EdgeType {
     Phantom(usize), // keep index to itself(edge) in phantom store
 }
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct TriangleEdge {
-    pub(crate) a: IndexPoint,
-    pub(crate) b: IndexPoint,
+pub(crate) struct TriangleEdge<I: IntNumber> {
+    pub(crate) a: IndexPoint<I>,
+    pub(crate) b: IndexPoint<I>,
     pub(crate) kind: EdgeType,
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum Content {
-    Point(IndexPoint),
-    Edges(Vec<TriangleEdge>),
+pub(crate) enum Content<I: IntNumber> {
+    Point(IndexPoint<I>),
+    Edges(Vec<TriangleEdge<I>>),
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Section {
-    pub(crate) sort: VSegment,
-    pub(crate) content: Content,
+pub(crate) struct Section<I: IntNumber> {
+    pub(crate) sort: VSegment<I>,
+    pub(crate) content: Content<I>,
 }
 
-impl Default for Section {
+impl<I: IntNumber> Default for Section<I> {
     #[inline]
     fn default() -> Self {
         Self {
@@ -37,16 +38,16 @@ impl Default for Section {
     }
 }
 
-impl KeyValue<VSegment> for Section {
+impl<I: IntNumber> KeyValue<VSegment<I>> for Section<I> {
     #[inline]
-    fn key(&self) -> &VSegment {
+    fn key(&self) -> &VSegment<I> {
         &self.sort
     }
 }
 
-impl TriangleEdge {
+impl<I: IntNumber> TriangleEdge<I> {
     #[inline]
-    pub(crate) fn border(a: IndexPoint, b: IndexPoint) -> Self {
+    pub(crate) fn border(a: IndexPoint<I>, b: IndexPoint<I>) -> Self {
         Self {
             a,
             b,
@@ -55,7 +56,7 @@ impl TriangleEdge {
     }
 
     #[inline]
-    pub(crate) fn phantom(a: IndexPoint, b: IndexPoint, index: usize) -> Self {
+    pub(crate) fn phantom(a: IndexPoint<I>, b: IndexPoint<I>, index: usize) -> Self {
         Self {
             a,
             b,
@@ -64,7 +65,7 @@ impl TriangleEdge {
     }
 
     #[inline]
-    pub(crate) fn regular(a: IndexPoint, b: IndexPoint, index: usize) -> Self {
+    pub(crate) fn regular(a: IndexPoint<I>, b: IndexPoint<I>, index: usize) -> Self {
         Self {
             a,
             b,
@@ -83,8 +84,8 @@ mod tests {
     use i_tree::set::tree::SetTree;
     use i_tree::EMPTY_REF;
 
-    impl Section {
-        fn with_sort(sort: VSegment) -> Section {
+    impl Section<i32> {
+        fn with_sort(sort: VSegment<i32>) -> Section<i32> {
             Section {
                 sort,
                 content: Content::Point(IndexPoint::empty()),

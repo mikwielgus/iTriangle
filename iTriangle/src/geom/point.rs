@@ -1,14 +1,15 @@
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 
 #[derive(Debug, Clone, Copy)]
-pub struct IndexPoint {
+pub struct IndexPoint<I: IntNumber> {
     pub index: usize,
-    pub point: IntPoint,
+    pub point: IntPoint<I>,
 }
 
-impl IndexPoint {
+impl<I: IntNumber> IndexPoint<I> {
     #[inline]
-    pub fn new(index: usize, point: IntPoint) -> Self {
+    pub fn new(index: usize, point: IntPoint<I>) -> Self {
         Self { index, point }
     }
 
@@ -21,7 +22,7 @@ impl IndexPoint {
     }
 }
 
-impl Default for IndexPoint {
+impl<I: IntNumber> Default for IndexPoint<I> {
     #[inline]
     fn default() -> Self {
         IndexPoint::empty()

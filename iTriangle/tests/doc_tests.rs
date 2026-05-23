@@ -43,23 +43,28 @@ mod tests {
             ],
         ];
 
-        let triangulation = shape.triangulate().to_triangulation::<u16>();
+        let triangulation = shape.triangulate::<i32>().to_triangulation::<u16>();
 
         println!("points: {:?}", triangulation.points);
         println!("indices: {:?}", triangulation.indices);
 
-        let delaunay_triangulation: Triangulation<[f64; 2], u16> =
-            shape.triangulate().into_delaunay().to_triangulation();
+        let delaunay_triangulation: Triangulation<[f64; 2], u16> = shape
+            .triangulate::<i32>()
+            .into_delaunay()
+            .to_triangulation();
 
         println!("points: {:?}", delaunay_triangulation.points);
         println!("indices: {:?}", delaunay_triangulation.indices);
 
-        let convex_polygons = shape.triangulate().into_delaunay().to_convex_polygons();
+        let convex_polygons = shape
+            .triangulate::<i32>()
+            .into_delaunay()
+            .to_convex_polygons();
 
         println!("convex polygons: {:?}", convex_polygons);
 
         let tessellation: Triangulation<[f64; 2], u16> = shape
-            .triangulate()
+            .triangulate::<i32>()
             .into_delaunay()
             .refine_with_circumcenters_by_obtuse_angle(0.0)
             .to_triangulation();
@@ -68,7 +73,7 @@ mod tests {
         println!("indices: {:?}", tessellation.indices);
 
         let centroids = shape
-            .triangulate()
+            .triangulate::<i32>()
             .into_delaunay()
             .refine_with_circumcenters_by_obtuse_angle(0.0)
             .to_centroid_net(0.0);
@@ -80,7 +85,7 @@ mod tests {
     fn test_1() {
         let contours = random_contours(100);
 
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
 
         // apply Delaunay condition
         triangulator.delaunay(true);

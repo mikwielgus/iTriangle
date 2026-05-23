@@ -1,6 +1,8 @@
 use alloc::vec::Vec;
+use i_key_sort::sort::key::SortKey;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::{i_float::adapter::FloatPointAdapter, i_shape::float::adapter::PathToInt};
 
 use crate::int::locator::IntPointInTriangulationLocator;
@@ -9,19 +11,23 @@ use crate::{
     location::PointLocationInTriangulation,
 };
 
-pub trait PointInTriangulationLocator<P> {
+pub trait PointInTriangulationLocator<P, I: IntNumber> {
     fn locate_points<T>(&self, points: &[P]) -> Vec<PointLocationInTriangulation>
     where
         P: FloatPointCompatible<Scalar = T>,
+        I: SortKey,
         T: FloatNumber;
 }
 
-impl<P, I: IndexType> Triangulation<P, I> {
-    pub fn locate_points<T: FloatNumber>(&self, points: &[P]) -> Vec<PointLocationInTriangulation>
+impl<P, N: IndexType> Triangulation<P, N> {
+    pub fn locate_points<T: FloatNumber, I: IntNumber + SortKey>(
+        &self,
+        points: &[P],
+    ) -> Vec<PointLocationInTriangulation>
     where
         P: FloatPointCompatible<Scalar = T>,
     {
-        let adapter = FloatPointAdapter::with_iter(self.points.iter().chain(points.iter()));
+        let adapter = FloatPointAdapter::<P, I>::with_iter(self.points.iter().chain(points.iter()));
 
         let int_points = points.to_int(&adapter);
 
@@ -36,14 +42,16 @@ impl<P, I: IndexType> Triangulation<P, I> {
     }
 }
 
-impl<P, I: IndexType> PointInTriangulationLocator<P> for Triangulation<P, I> {
+impl<P, I: IntNumber + SortKey, N: IndexType> PointInTriangulationLocator<P, I>
+    for Triangulation<P, N>
+{
     #[inline]
     fn locate_points<T>(&self, points: &[P]) -> Vec<PointLocationInTriangulation>
     where
         P: FloatPointCompatible<Scalar = T>,
         T: FloatNumber,
     {
-        Triangulation::locate_points::<T>(self, points)
+        Triangulation::locate_points::<T, I>(self, points)
     }
 }
 
@@ -75,7 +83,7 @@ mod tests {
             [5.0, 1.0],
         ];
 
-        let locations = triangulation.locate_points::<f64>(&points_to_locate);
+        let locations = triangulation.locate_points::<f64, i32>(&points_to_locate);
 
         assert!(matches!(
             locations[0],

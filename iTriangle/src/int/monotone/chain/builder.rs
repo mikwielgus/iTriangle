@@ -1,6 +1,8 @@
 use crate::int::monotone::chain::vertex::ChainVertex;
 use alloc::vec::Vec;
+use i_key_sort::sort::key::SortKey;
 use i_key_sort::sort::two_keys::TwoKeysSort;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_float::triangle::Triangle;
 use i_overlay::i_shape::flat::buffer::FlatContoursBuffer;
@@ -10,7 +12,10 @@ use i_overlay::i_shape::util::reserve::Reserve;
 pub(crate) struct ChainBuilder;
 
 impl ChainBuilder {
-    pub(crate) fn flat_to_vertices(flat: &FlatContoursBuffer, vertices: &mut Vec<ChainVertex>) {
+    pub(crate) fn flat_to_vertices<I: IntNumber + SortKey>(
+        flat: &FlatContoursBuffer<I>,
+        vertices: &mut Vec<ChainVertex<I>>,
+    ) {
         vertices.clear();
         for range in flat.ranges.iter() {
             let contour = &flat.points[range.clone()];
@@ -19,10 +24,10 @@ impl ChainBuilder {
         vertices.sort_by_swipe_line();
     }
 
-    pub(crate) fn shape_to_vertices(
-        shape: &IntShape,
-        points: Option<&[IntPoint]>,
-        vertices: &mut Vec<ChainVertex>,
+    pub(crate) fn shape_to_vertices<I: IntNumber + SortKey>(
+        shape: &IntShape<I>,
+        points: Option<&[IntPoint<I>]>,
+        vertices: &mut Vec<ChainVertex<I>>,
     ) {
         vertices.clear();
         for contour in shape.iter() {
@@ -34,10 +39,10 @@ impl ChainBuilder {
         vertices.sort_by_swipe_line();
     }
 
-    pub(crate) fn contour_to_vertices(
-        contour: &IntContour,
-        points: Option<&[IntPoint]>,
-        vertices: &mut Vec<ChainVertex>,
+    pub(crate) fn contour_to_vertices<I: IntNumber + SortKey>(
+        contour: &IntContour<I>,
+        points: Option<&[IntPoint<I>]>,
+        vertices: &mut Vec<ChainVertex<I>>,
     ) {
         vertices.clear();
         vertices.add_contour(contour);
@@ -54,19 +59,19 @@ enum DirectionType {
     Prev,
 }
 
-struct Direction {
-    point: IntPoint,
+struct Direction<I: IntNumber> {
+    point: IntPoint<I>,
     kind: DirectionType,
 }
 
-trait ChainVertexVec {
-    fn add_contour(&mut self, contour: &[IntPoint]);
-    fn add_steiner_points(&mut self, points: &[IntPoint]);
+trait ChainVertexVec<I: IntNumber> {
+    fn add_contour(&mut self, contour: &[IntPoint<I>]);
+    fn add_steiner_points(&mut self, points: &[IntPoint<I>]);
 }
 
-impl ChainVertexVec for Vec<ChainVertex> {
+impl<I: IntNumber> ChainVertexVec<I> for Vec<ChainVertex<I>> {
     #[inline]
-    fn add_contour(&mut self, contour: &[IntPoint]) {
+    fn add_contour(&mut self, contour: &[IntPoint<I>]) {
         let mut prev = contour[contour.len() - 2];
         let mut this = contour[contour.len() - 1];
 
@@ -78,7 +83,7 @@ impl ChainVertexVec for Vec<ChainVertex> {
     }
 
     #[inline]
-    fn add_steiner_points(&mut self, points: &[IntPoint]) {
+    fn add_steiner_points(&mut self, points: &[IntPoint<I>]) {
         for &this in points {
             self.push(ChainVertex::implant(this));
         }
@@ -86,11 +91,14 @@ impl ChainVertexVec for Vec<ChainVertex> {
 }
 
 pub(crate) trait ChainVertexExport {
-    fn feed_points(&self, points: &mut Vec<IntPoint>);
+    type Int: IntNumber;
+    fn feed_points(&self, points: &mut Vec<IntPoint<Self::Int>>);
 }
-impl ChainVertexExport for [ChainVertex] {
+impl<I: IntNumber> ChainVertexExport for [ChainVertex<I>] {
+    type Int = I;
+
     #[inline]
-    fn feed_points(&self, points: &mut Vec<IntPoint>) {
+    fn feed_points(&self, points: &mut Vec<IntPoint<I>>) {
         points.reserve_capacity(self.len());
         points.clear();
         let mut index = usize::MAX;
@@ -108,7 +116,7 @@ trait ChainVertexSort {
     fn sort_node_in_clockwise_order(&mut self);
 }
 
-impl ChainVertexSort for [ChainVertex] {
+impl<I: IntNumber + SortKey> ChainVertexSort for [ChainVertex<I>] {
     #[inline]
     fn sort_by_swipe_line(&mut self) {
         self.sort_by_two_keys(false, |v| v.this.x, |v| v.this.y);
@@ -161,7 +169,7 @@ impl ChainVertexSort for [ChainVertex] {
             if (a.x < c.x || a.x == c.x && a.y < c.y) && (b.x < c.x || b.x == c.x && b.y < c.y)
                 || (a.x > c.x || a.x == c.x && a.y > c.y) && (b.x > c.x || b.x == c.x && b.y > c.y)
             {
-                Triangle::clock_order_point(a, b, c)
+                Triangle::clock_order(a, b, c)
             } else if a.x == c.x && b.x == c.x {
                 a.y.cmp(&b.y)
             } else {

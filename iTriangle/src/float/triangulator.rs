@@ -2,19 +2,26 @@ use crate::float::triangulation::Triangulation;
 use crate::int::triangulation::{IndexType, IntTriangulation};
 use crate::int::triangulator::IntTriangulator;
 use crate::int::validation::Validation;
+use i_key_sort::sort::key::SortKey;
 use i_overlay::core::solver::Solver;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_shape::flat::buffer::FlatContoursBuffer;
 use i_overlay::i_shape::source::resource::ShapeResource;
+use i_tree::{Expiration, LayoutNumber};
 
 /// A reusable triangulator that converts float-based shapes into triangle meshes.
-pub struct Triangulator<I> {
-    flat_buffer: Option<FlatContoursBuffer>,
-    int_buffer: Option<IntTriangulation<I>>,
-    int_triangulator: IntTriangulator<I>,
+pub struct Triangulator<I: IntNumber + Expiration + LayoutNumber + SortKey, N = u16> {
+    flat_buffer: Option<FlatContoursBuffer<I>>,
+    int_buffer: Option<IntTriangulation<I, N>>,
+    int_triangulator: IntTriangulator<I, N>,
 }
 
-impl<I: IndexType> Triangulator<I> {
+impl<I, N> Triangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     /// Enables or disables Delaunay refinement for triangulation.
     ///
     /// When enabled, the triangulator will attempt to generate a mesh that satisfies the
@@ -52,7 +59,7 @@ impl<I: IndexType> Triangulator<I> {
     ///
     /// Uses internal buffers to minimize allocations and speed up repeated calls.
     #[inline]
-    pub fn new(max_points_count: usize, validation: Validation, solver: Solver) -> Self {
+    pub fn new(max_points_count: usize, validation: Validation<I>, solver: Solver) -> Self {
         Self {
             flat_buffer: Some(FlatContoursBuffer::with_capacity(max_points_count)),
             int_buffer: Some(IntTriangulation::with_capacity(max_points_count)),
@@ -61,14 +68,22 @@ impl<I: IndexType> Triangulator<I> {
     }
 }
 
-impl<I: IndexType> Default for Triangulator<I> {
+impl<I, N> Default for Triangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     #[inline]
     fn default() -> Self {
         Self::new(64, Default::default(), Default::default())
     }
 }
 
-impl<I: IndexType> Triangulator<I> {
+impl<I, N> Triangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     /// Performs triangulation on the provided shape resource and returns a new `Triangulation`.
     ///
     /// - `resource`: A `ShapeResource` that define contours.
@@ -79,7 +94,7 @@ impl<I: IndexType> Triangulator<I> {
     ///
     /// Uses internal buffers to reduce allocations and preserve performance.
     #[inline]
-    pub fn triangulate<R, P>(&mut self, resource: &R) -> Triangulation<P, I>
+    pub fn triangulate<R, P>(&mut self, resource: &R) -> Triangulation<P, N>
     where
         R: ShapeResource<P> + ?Sized,
         P: FloatPointCompatible,
@@ -113,7 +128,7 @@ impl<I: IndexType> Triangulator<I> {
     ///
     /// Uses internal buffers to reduce allocations and preserve performance.
     #[inline]
-    pub fn triangulate_into<R, P>(&mut self, resource: &R, triangulation: &mut Triangulation<P, I>)
+    pub fn triangulate_into<R, P>(&mut self, resource: &R, triangulation: &mut Triangulation<P, N>)
     where
         R: ShapeResource<P> + ?Sized,
         P: FloatPointCompatible,
@@ -145,7 +160,7 @@ impl<I: IndexType> Triangulator<I> {
     ///
     /// Uses internal buffers to reduce allocations and preserve performance.
     #[inline]
-    pub fn uncheck_triangulate<R, P>(&mut self, resource: &R) -> Triangulation<P, I>
+    pub fn uncheck_triangulate<R, P>(&mut self, resource: &R) -> Triangulation<P, N>
     where
         R: ShapeResource<P> + ?Sized,
         P: FloatPointCompatible,
@@ -184,7 +199,7 @@ impl<I: IndexType> Triangulator<I> {
     pub fn uncheck_triangulate_into<R, P>(
         &mut self,
         resource: &R,
-        triangulation: &mut Triangulation<P, I>,
+        triangulation: &mut Triangulation<P, N>,
     ) where
         R: ShapeResource<P> + ?Sized,
         P: FloatPointCompatible,

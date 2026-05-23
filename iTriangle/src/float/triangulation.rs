@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 use i_overlay::i_float::adapter::FloatPointAdapter;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_shape::float::adapter::PathToFloat;
 use i_overlay::i_shape::util::reserve::Reserve;
 
@@ -13,9 +14,9 @@ use i_overlay::i_shape::util::reserve::Reserve;
 ///
 /// # Parameters
 /// - `P`: Float point type (e.g., `Vec2`, `[f32; 2]`, etc.)
-pub struct RawTriangulation<P: FloatPointCompatible> {
-    pub raw: RawIntTriangulation,
-    pub adapter: FloatPointAdapter<P>,
+pub struct RawTriangulation<P: FloatPointCompatible, I: IntNumber> {
+    pub raw: RawIntTriangulation<I>,
+    pub adapter: FloatPointAdapter<P, I>,
 }
 
 /// A flat triangulation result consisting of float points and triangle indices.
@@ -28,7 +29,7 @@ pub struct Triangulation<P, I = u16> {
     pub indices: Vec<I>,
 }
 
-impl<P: FloatPointCompatible> RawTriangulation<P> {
+impl<P: FloatPointCompatible, I: IntNumber> RawTriangulation<P, I> {
     /// Returns the float-mapped points used in the triangulation.
     ///
     /// The points are guaranteed to match the input shape geometry within adapter precision.
@@ -39,13 +40,13 @@ impl<P: FloatPointCompatible> RawTriangulation<P> {
 
     /// Returns the triangle indices for the mesh, ordered counter-clockwise.
     #[inline]
-    pub fn triangle_indices<I: IndexType>(&self) -> Vec<I> {
+    pub fn triangle_indices<N: IndexType>(&self) -> Vec<N> {
         self.raw.triangle_indices()
     }
 
     /// Converts this flat triangulation into a flat [`Triangulation`] (points + indices).
     #[inline]
-    pub fn to_triangulation<I: IndexType>(&self) -> Triangulation<P, I> {
+    pub fn to_triangulation<N: IndexType>(&self) -> Triangulation<P, N> {
         Triangulation {
             indices: self.triangle_indices(),
             points: self.points(),
@@ -53,7 +54,7 @@ impl<P: FloatPointCompatible> RawTriangulation<P> {
     }
 }
 
-impl<P, I: IndexType> Triangulation<P, I> {
+impl<P, N: IndexType> Triangulation<P, N> {
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
@@ -63,10 +64,10 @@ impl<P, I: IndexType> Triangulation<P, I> {
     }
 
     #[inline]
-    pub fn set_with_int(
+    pub fn set_with_int<I: IntNumber>(
         &mut self,
-        triangulation: &IntTriangulation<I>,
-        adapter: &FloatPointAdapter<P>,
+        triangulation: &IntTriangulation<I, N>,
+        adapter: &FloatPointAdapter<P, I>,
     ) where
         P: FloatPointCompatible,
     {
@@ -81,12 +82,12 @@ impl<P, I: IndexType> Triangulation<P, I> {
     }
 }
 
-impl<I: IndexType> IntTriangulation<I> {
+impl<I: IntNumber, N: IndexType> IntTriangulation<I, N> {
     #[inline]
     pub fn into_float<P: FloatPointCompatible>(
         self,
-        adapter: &FloatPointAdapter<P>,
-    ) -> Triangulation<P, I> {
+        adapter: &FloatPointAdapter<P, I>,
+    ) -> Triangulation<P, N> {
         let points = self
             .points
             .iter()
@@ -101,8 +102,8 @@ impl<I: IndexType> IntTriangulation<I> {
     #[inline]
     pub fn to_float<P: FloatPointCompatible>(
         &self,
-        adapter: &FloatPointAdapter<P>,
-    ) -> Triangulation<P, I> {
+        adapter: &FloatPointAdapter<P, I>,
+    ) -> Triangulation<P, N> {
         let points = self
             .points
             .iter()
@@ -180,7 +181,7 @@ mod tests {
     fn test_0() {
         let rect = [[0.0, 0.0], [5.0, 0.0], [5.0, 8.0], [0.0, 8.0]];
 
-        let triangulation = Triangulator::<u32>::default().triangulate(&rect);
+        let triangulation = Triangulator::<i32, u32>::default().triangulate(&rect);
         assert_eq!(triangulation.points.len(), 4);
         assert_eq!(triangulation.indices.len(), 6);
 

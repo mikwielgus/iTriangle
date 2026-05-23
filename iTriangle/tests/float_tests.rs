@@ -22,7 +22,7 @@ mod tests {
         .to_vec()]
         .to_vec();
 
-        let triangulation = shape.triangulate().to_triangulation::<u8>();
+        let triangulation = shape.triangulate::<i32>().to_triangulation::<u8>();
 
         assert_eq!(triangulation.points.len(), 6);
         assert_eq!(triangulation.indices.len(), 12);
@@ -32,7 +32,7 @@ mod tests {
     fn test_1() {
         let contour = [[0.0, 2.0], [0.0, 0.0], [4.0, 2.0], [4.0, 0.0]];
 
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
 
         triangulator.delaunay(false);
         let t0 = triangulator.triangulate(&contour);
@@ -59,7 +59,7 @@ mod tests {
         let simple = contour.simplify_shape(FillRule::NonZero);
         let area = simple.area();
 
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
 
         triangulator.delaunay(false);
         let t0 = triangulator.triangulate(&contour);
@@ -75,7 +75,7 @@ mod tests {
     fn test_3() {
         let contour = [[2.0, 3.0], [2.0, -2.0], [0.0, 3.0], [-1.0, 4.0], [0.0, 1.0]];
 
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
 
         triangulator.delaunay(false);
         let t0 = triangulator.triangulate(&contour);
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn test_random_0() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..20_000 {
@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_random_1() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..20_000 {
@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn test_random_2() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..20_000 {
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_random_3() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..10_000 {
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn test_random_4() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..1_000 {
@@ -186,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_random_5() {
-        let mut triangulator = Triangulator::<u32>::default();
+        let mut triangulator = Triangulator::<i32, u32>::default();
         let mut t = Triangulation::with_capacity(8);
 
         for _ in 0..500 {

@@ -11,13 +11,16 @@ use i_overlay::i_shape::source::resource::ShapeResource;
 use i_tree::{Expiration, LayoutNumber};
 
 /// A reusable triangulator that converts float-based shapes into triangle meshes.
-pub struct Triangulator<I: IntNumber + Expiration + LayoutNumber + SortKey, N = u16> {
+pub struct Triangulator<N = u16, I = i32>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+{
     flat_buffer: Option<FlatContoursBuffer<I>>,
     int_buffer: Option<IntTriangulation<I, N>>,
     int_triangulator: IntTriangulator<I, N>,
 }
 
-impl<I, N> Triangulator<I, N>
+impl<N, I> Triangulator<N, I>
 where
     I: IntNumber + Expiration + LayoutNumber + SortKey,
     N: IndexType,
@@ -68,7 +71,7 @@ where
     }
 }
 
-impl<I, N> Default for Triangulator<I, N>
+impl<N, I> Default for Triangulator<N, I>
 where
     I: IntNumber + Expiration + LayoutNumber + SortKey,
     N: IndexType,
@@ -79,7 +82,7 @@ where
     }
 }
 
-impl<I, N> Triangulator<I, N>
+impl<N, I> Triangulator<N, I>
 where
     I: IntNumber + Expiration + LayoutNumber + SortKey,
     N: IndexType,

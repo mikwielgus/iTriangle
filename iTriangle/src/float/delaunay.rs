@@ -12,7 +12,7 @@ use i_overlay::i_shape::float::adapter::PathToFloat;
 ///
 /// Produced from [`Triangulation::into_delaunay`] by applying edge flips
 /// to satisfy the Delaunay condition.
-pub struct Delaunay<P: FloatPointCompatible, I: IntNumber> {
+pub struct Delaunay<P: FloatPointCompatible, I: IntNumber = i32> {
     pub(super) delaunay: IntDelaunay<I>,
     pub(super) adapter: FloatPointAdapter<P, I>,
 }

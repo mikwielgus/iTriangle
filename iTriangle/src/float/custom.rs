@@ -17,12 +17,26 @@ use i_tree::{Expiration, LayoutNumber};
 /// Accepts a custom [`Validation`] object for tuning fill rule, min area, etc.
 pub trait CustomTriangulatable<P: FloatPointCompatible> {
     /// Performs triangulation using the specified [`Validation`] settings.
-    fn custom_triangulate<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
+    fn custom_triangulate(&self, validation: Validation<i32>) -> RawTriangulation<P> {
+        self.custom_triangulate_as(validation)
+    }
+
+    /// Performs triangulation using the requested integer coordinate type.
+    fn custom_triangulate_as<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey;
 
     /// Performs triangulation with Steiner points and a custom [`Validation`] config.
-    fn custom_triangulate_with_steiner_points<I>(
+    fn custom_triangulate_with_steiner_points(
+        &self,
+        points: &[P],
+        validation: Validation<i32>,
+    ) -> RawTriangulation<P> {
+        self.custom_triangulate_with_steiner_points_as(points, validation)
+    }
+
+    /// Performs triangulation with Steiner points using the requested integer coordinate type.
+    fn custom_triangulate_with_steiner_points_as<I>(
         &self,
         points: &[P],
         validation: Validation<I>,
@@ -35,7 +49,7 @@ impl<P> CustomTriangulatable<P> for Contour<P>
 where
     P: FloatPointCompatible,
 {
-    fn custom_triangulate<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
+    fn custom_triangulate_as<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -51,7 +65,7 @@ where
         }
     }
 
-    fn custom_triangulate_with_steiner_points<I>(
+    fn custom_triangulate_with_steiner_points_as<I>(
         &self,
         points: &[P],
         validation: Validation<I>,
@@ -79,7 +93,7 @@ impl<P> CustomTriangulatable<P> for [Contour<P>]
 where
     P: FloatPointCompatible,
 {
-    fn custom_triangulate<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
+    fn custom_triangulate_as<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -95,7 +109,7 @@ where
         }
     }
 
-    fn custom_triangulate_with_steiner_points<I>(
+    fn custom_triangulate_with_steiner_points_as<I>(
         &self,
         points: &[P],
         validation: Validation<I>,
@@ -123,7 +137,7 @@ impl<P> CustomTriangulatable<P> for [Shape<P>]
 where
     P: FloatPointCompatible,
 {
-    fn custom_triangulate<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
+    fn custom_triangulate_as<I>(&self, validation: Validation<I>) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -139,7 +153,7 @@ where
         }
     }
 
-    fn custom_triangulate_with_steiner_points<I>(
+    fn custom_triangulate_with_steiner_points_as<I>(
         &self,
         points: &[P],
         validation: Validation<I>,

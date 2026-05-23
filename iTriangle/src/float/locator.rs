@@ -11,7 +11,7 @@ use crate::{
     location::PointLocationInTriangulation,
 };
 
-pub trait PointInTriangulationLocator<P, I: IntNumber> {
+pub trait PointInTriangulationLocator<P, I: IntNumber = i32> {
     fn locate_points<T>(&self, points: &[P]) -> Vec<PointLocationInTriangulation>
     where
         P: FloatPointCompatible<Scalar = T>,

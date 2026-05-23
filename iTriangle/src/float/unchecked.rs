@@ -21,11 +21,25 @@ use i_tree::Expiration;
 /// - Steiner points must lie strictly within the shape
 pub trait UncheckedTriangulatable<P: FloatPointCompatible> {
     /// Triangulates float geometry without validation or simplification.
-    fn unchecked_triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn unchecked_triangulate(&self) -> RawTriangulation<P> {
+        self.unchecked_triangulate_as::<i32>()
+    }
+
+    /// Triangulates float geometry without validation using the requested integer coordinate type.
+    fn unchecked_triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey;
+
     /// Same as `unchecked_triangulate`, but inserts user-defined Steiner points.
-    fn unchecked_triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_with_steiner_points(&self, points: &[P]) -> RawTriangulation<P> {
+        self.unchecked_triangulate_with_steiner_points_as::<i32>(points)
+    }
+
+    /// Same as `unchecked_triangulate_as`, but inserts user-defined Steiner points.
+    fn unchecked_triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey;
 }
@@ -34,7 +48,7 @@ impl<P> UncheckedTriangulatable<P> for [P]
 where
     P: FloatPointCompatible,
 {
-    fn unchecked_triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {
@@ -50,7 +64,10 @@ where
         }
     }
 
-    fn unchecked_triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {
@@ -74,7 +91,7 @@ impl<P> UncheckedTriangulatable<P> for [Contour<P>]
 where
     P: FloatPointCompatible,
 {
-    fn unchecked_triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {
@@ -90,7 +107,10 @@ where
         }
     }
 
-    fn unchecked_triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {
@@ -114,7 +134,7 @@ impl<P> UncheckedTriangulatable<P> for [Shape<P>]
 where
     P: FloatPointCompatible,
 {
-    fn unchecked_triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {
@@ -130,7 +150,10 @@ where
         }
     }
 
-    fn unchecked_triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn unchecked_triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + SortKey,
     {

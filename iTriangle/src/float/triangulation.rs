@@ -14,7 +14,7 @@ use i_overlay::i_shape::util::reserve::Reserve;
 ///
 /// # Parameters
 /// - `P`: Float point type (e.g., `Vec2`, `[f32; 2]`, etc.)
-pub struct RawTriangulation<P: FloatPointCompatible, I: IntNumber> {
+pub struct RawTriangulation<P: FloatPointCompatible, I: IntNumber = i32> {
     pub raw: RawIntTriangulation<I>,
     pub adapter: FloatPointAdapter<P, I>,
 }
@@ -181,7 +181,7 @@ mod tests {
     fn test_0() {
         let rect = [[0.0, 0.0], [5.0, 0.0], [5.0, 8.0], [0.0, 8.0]];
 
-        let triangulation = Triangulator::<i32, u32>::default().triangulate(&rect);
+        let triangulation = Triangulator::<u32>::default().triangulate(&rect);
         assert_eq!(triangulation.points.len(), 4);
         assert_eq!(triangulation.indices.len(), 6);
 

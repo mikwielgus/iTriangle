@@ -24,14 +24,24 @@ pub trait Triangulatable<P: FloatPointCompatible> {
     /// Triangulates the shape(s) using the default [`Triangulator`] configuration.
     ///
     /// Validation includes contour simplification, direction correction, and area filtering.
-    fn triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn triangulate(&self) -> RawTriangulation<P> {
+        self.triangulate_as::<i32>()
+    }
+
+    /// Triangulates the shape(s) using the requested integer coordinate type.
+    fn triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey;
 
     /// Triangulates the shape(s) and inserts the given Steiner points.
     ///
     /// Points must lie strictly within the interior of the geometry.
-    fn triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn triangulate_with_steiner_points(&self, points: &[P]) -> RawTriangulation<P> {
+        self.triangulate_with_steiner_points_as::<i32>(points)
+    }
+
+    /// Triangulates the shape(s) with Steiner points using the requested integer coordinate type.
+    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey;
 }
@@ -40,7 +50,7 @@ impl<P> Triangulatable<P> for [P]
 where
     P: FloatPointCompatible,
 {
-    fn triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -56,7 +66,7 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -80,7 +90,7 @@ impl<P> Triangulatable<P> for [Contour<P>]
 where
     P: FloatPointCompatible,
 {
-    fn triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -96,7 +106,7 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -120,7 +130,7 @@ impl<P> Triangulatable<P> for [Shape<P>]
 where
     P: FloatPointCompatible,
 {
-    fn triangulate<I>(&self) -> RawTriangulation<P, I>
+    fn triangulate_as<I>(&self) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
@@ -136,7 +146,7 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points<I>(&self, points: &[P]) -> RawTriangulation<P, I>
+    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<P, I>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {

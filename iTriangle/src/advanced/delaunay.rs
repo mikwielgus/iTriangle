@@ -271,7 +271,7 @@ impl<I: IntNumber> IntDelaunay<I> {
             let b = t.vertices[1].point;
             let c = t.vertices[2].point;
             let area = Triangle::area_two(a, b, c);
-            assert!(area <= I::Wide::ZERO);
+            assert!(area >= I::Wide::ZERO);
 
             let n0 = t.neighbors[0];
             let n1 = t.neighbors[1];

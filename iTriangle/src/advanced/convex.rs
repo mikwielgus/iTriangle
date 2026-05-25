@@ -263,8 +263,8 @@ mod tests {
 
         assert_eq!(polygons.len(), 2);
 
-        assert!(polygons[0].area_two() < 0);
-        assert!(polygons[1].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
+        assert!(polygons[1].area_two() > 0);
     }
 
     #[test]
@@ -274,7 +274,7 @@ mod tests {
 
         assert_eq!(polygons.len(), 1);
 
-        assert!(polygons[0].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
     }
 
     #[test]
@@ -297,8 +297,8 @@ mod tests {
 
         assert_eq!(polygons.len(), 3);
 
-        assert!(polygons[0].area_two() < 0);
-        assert!(polygons[1].area_two() < 0);
-        assert!(polygons[2].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
+        assert!(polygons[1].area_two() > 0);
+        assert!(polygons[2].area_two() > 0);
     }
 }

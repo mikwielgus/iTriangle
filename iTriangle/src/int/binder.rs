@@ -46,7 +46,7 @@ impl<I: IntNumber + Expiration> SteinerInference<I> for [IntShape<I>] {
         }
 
         let mut points = points.to_vec();
-        points.sort_unstable_by(|a, b| a.x.cmp(&b.x));
+        points.sort_unstable_by_key(|p| p.x);
         points.dedup();
 
         let x_min = points[0].x;
@@ -92,9 +92,9 @@ impl<I: IntNumber + Expiration> SteinerInference<I> for [IntShape<I>] {
             return vec![Vec::new(); self.len()];
         }
 
-        segments.sort_unstable_by(|s0, s1| s0.v_segment.a.cmp(&s1.v_segment.a));
-        v_edges.sort_unstable_by(|e0, e1| e0.x.cmp(&e1.x));
-        x_points.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x));
+        segments.sort_unstable_by_key(|s| s.v_segment.a);
+        v_edges.sort_unstable_by_key(|e| e.x);
+        x_points.sort_unstable_by_key(|p| p.x);
 
         let mut groups = vec![Vec::new(); self.len()];
         let capacity = segments.len().ilog2() as usize;

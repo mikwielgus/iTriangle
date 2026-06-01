@@ -3,27 +3,34 @@ use crate::int::earcut::earcut_64::Earcut64;
 use crate::int::monotone::triangulator::MonotoneTriangulator;
 use crate::int::triangulation::{IndexType, IntTriangulation, RawIntTriangulation};
 use crate::int::validation::Validation;
+use i_key_sort::sort::key::SortKey;
 use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay::Overlay;
 use i_overlay::core::solver::Solver;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::flat::buffer::FlatContoursBuffer;
 use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
+use i_tree::{Expiration, LayoutNumber};
 
-pub struct IntTriangulator<I> {
-    pub overlay: Overlay,
+pub struct IntTriangulator<I: IntNumber + Expiration + LayoutNumber + SortKey, N> {
+    pub overlay: Overlay<I>,
     pub fill_rule: FillRule,
     pub earcut: bool,
     pub delaunay: bool,
-    triangulator: MonotoneTriangulator,
-    shapes_buffer: Option<IntTriangulation<I>>,
-    raw_buffer: Option<RawIntTriangulation>,
+    triangulator: MonotoneTriangulator<I>,
+    shapes_buffer: Option<IntTriangulation<I, N>>,
+    raw_buffer: Option<RawIntTriangulation<I>>,
     delaunay_buffer: DelaunayBuffer,
 }
 
-impl<I: IndexType> IntTriangulator<I> {
+impl<I, N> IntTriangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     #[inline]
-    pub fn new(max_points_count: usize, validation: Validation, solver: Solver) -> Self {
+    pub fn new(max_points_count: usize, validation: Validation<I>, solver: Solver) -> Self {
         Self {
             overlay: Overlay::new_custom(max_points_count, validation.options, solver),
             fill_rule: validation.fill_rule,
@@ -37,16 +44,24 @@ impl<I: IndexType> IntTriangulator<I> {
     }
 }
 
-impl<I: IndexType> Default for IntTriangulator<I> {
+impl<I, N> Default for IntTriangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     #[inline]
     fn default() -> Self {
         Self::new(64, Default::default(), Default::default())
     }
 }
 
-impl<I: IndexType> IntTriangulator<I> {
+impl<I, N> IntTriangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     #[inline]
-    pub fn triangulate_contour(&mut self, contour: &IntContour) -> IntTriangulation<I> {
+    pub fn triangulate_contour(&mut self, contour: &IntContour<I>) -> IntTriangulation<I, N> {
         match self.overlay.simplify_contour(contour, self.fill_rule) {
             None => self.uncheck_triangulate_contour(contour),
             Some(shapes) => self.uncheck_triangulate_shapes(&shapes),
@@ -56,8 +71,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn triangulate_contour_into(
         &mut self,
-        contour: IntContour,
-        triangulation: &mut IntTriangulation<I>,
+        contour: IntContour<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         match self.overlay.simplify_contour(&contour, self.fill_rule) {
             None => self.uncheck_triangulate_contour_into(&contour, triangulation),
@@ -66,7 +81,7 @@ impl<I: IndexType> IntTriangulator<I> {
     }
 
     #[inline]
-    pub fn triangulate_shape(&mut self, shape: &IntShape) -> IntTriangulation<I> {
+    pub fn triangulate_shape(&mut self, shape: &IntShape<I>) -> IntTriangulation<I, N> {
         match self.overlay.simplify_shape(shape, self.fill_rule) {
             None => self.uncheck_triangulate_shape(shape),
             Some(shapes) => self.uncheck_triangulate_shapes(&shapes),
@@ -76,8 +91,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn triangulate_shape_into(
         &mut self,
-        shape: &IntShape,
-        triangulation: &mut IntTriangulation<I>,
+        shape: &IntShape<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         match self.overlay.simplify_shape(shape, self.fill_rule) {
             None => self.uncheck_triangulate_shape_into(shape, triangulation),
@@ -86,7 +101,7 @@ impl<I: IndexType> IntTriangulator<I> {
     }
 
     #[inline]
-    pub fn triangulate_shapes(&mut self, shapes: &IntShapes) -> IntTriangulation<I> {
+    pub fn triangulate_shapes(&mut self, shapes: &IntShapes<I>) -> IntTriangulation<I, N> {
         let simple = self.overlay.simplify_shapes(shapes, self.fill_rule);
         self.uncheck_triangulate_shapes(&simple)
     }
@@ -94,15 +109,15 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn triangulate_shapes_into(
         &mut self,
-        shapes: &IntShapes,
-        triangulation: &mut IntTriangulation<I>,
+        shapes: &IntShapes<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         let simple = self.overlay.simplify_shapes(shapes, self.fill_rule);
         self.uncheck_triangulate_shapes_into(&simple, triangulation);
     }
 
     #[inline]
-    pub fn triangulate_flat(&mut self, flat: &mut FlatContoursBuffer) -> IntTriangulation<I> {
+    pub fn triangulate_flat(&mut self, flat: &mut FlatContoursBuffer<I>) -> IntTriangulation<I, N> {
         self.overlay.simplify_flat_buffer(flat, self.fill_rule);
         self.uncheck_triangulate_flat(flat)
     }
@@ -110,17 +125,24 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn triangulate_flat_into(
         &mut self,
-        flat: &mut FlatContoursBuffer,
-        triangulation: &mut IntTriangulation<I>,
+        flat: &mut FlatContoursBuffer<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         self.overlay.simplify_flat_buffer(flat, self.fill_rule);
         self.uncheck_triangulate_flat_into(flat, triangulation);
     }
 }
 
-impl<I: IndexType> IntTriangulator<I> {
+impl<I, N> IntTriangulator<I, N>
+where
+    I: IntNumber + Expiration + LayoutNumber + SortKey,
+    N: IndexType,
+{
     #[inline]
-    pub fn uncheck_triangulate_contour(&mut self, contour: &IntContour) -> IntTriangulation<I> {
+    pub fn uncheck_triangulate_contour(
+        &mut self,
+        contour: &IntContour<I>,
+    ) -> IntTriangulation<I, N> {
         let mut triangulation = Default::default();
         self.uncheck_triangulate_contour_into(contour, &mut triangulation);
         triangulation
@@ -129,8 +151,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn uncheck_triangulate_contour_into(
         &mut self,
-        contour: &IntContour,
-        triangulation: &mut IntTriangulation<I>,
+        contour: &IntContour<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         if self.delaunay {
             let mut raw = self.raw_buffer.take().unwrap_or_default();
@@ -152,7 +174,7 @@ impl<I: IndexType> IntTriangulator<I> {
     }
 
     #[inline]
-    pub fn uncheck_triangulate_shape(&mut self, shape: &IntShape) -> IntTriangulation<I> {
+    pub fn uncheck_triangulate_shape(&mut self, shape: &IntShape<I>) -> IntTriangulation<I, N> {
         let mut triangulation = Default::default();
         self.uncheck_triangulate_shape_into(shape, &mut triangulation);
         triangulation
@@ -161,8 +183,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn uncheck_triangulate_shape_into(
         &mut self,
-        shape: &IntShape,
-        triangulation: &mut IntTriangulation<I>,
+        shape: &IntShape<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         if shape.len() == 1 {
             self.uncheck_triangulate_contour_into(&shape[0], triangulation);
@@ -183,7 +205,7 @@ impl<I: IndexType> IntTriangulator<I> {
     }
 
     #[inline]
-    pub fn uncheck_triangulate_shapes(&mut self, shapes: &IntShapes) -> IntTriangulation<I> {
+    pub fn uncheck_triangulate_shapes(&mut self, shapes: &IntShapes<I>) -> IntTriangulation<I, N> {
         let mut triangulation = Default::default();
         self.uncheck_triangulate_shapes_into(shapes, &mut triangulation);
         triangulation
@@ -192,8 +214,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn uncheck_triangulate_shapes_into(
         &mut self,
-        shapes: &IntShapes,
-        triangulation: &mut IntTriangulation<I>,
+        shapes: &IntShapes<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         if shapes.len() == 1 {
             self.uncheck_triangulate_shape_into(&shapes[0], triangulation);
@@ -214,8 +236,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn uncheck_triangulate_flat(
         &mut self,
-        flat_buffer: &FlatContoursBuffer,
-    ) -> IntTriangulation<I> {
+        flat_buffer: &FlatContoursBuffer<I>,
+    ) -> IntTriangulation<I, N> {
         let mut triangulation = Default::default();
         self.uncheck_triangulate_flat_into(flat_buffer, &mut triangulation);
         triangulation
@@ -224,8 +246,8 @@ impl<I: IndexType> IntTriangulator<I> {
     #[inline]
     pub fn uncheck_triangulate_flat_into(
         &mut self,
-        flat: &FlatContoursBuffer,
-        triangulation: &mut IntTriangulation<I>,
+        flat: &FlatContoursBuffer<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         if flat.is_empty() {
             triangulation.reserve_and_clear(0);
@@ -258,14 +280,14 @@ trait Earcut64Compatible {
     fn is_earcut_compatible(&self) -> bool;
 }
 
-impl Earcut64Compatible for FlatContoursBuffer {
+impl<I: IntNumber> Earcut64Compatible for FlatContoursBuffer<I> {
     #[inline(always)]
     fn is_earcut_compatible(&self) -> bool {
         self.is_single_contour() && self.points.len() <= 64
     }
 }
 
-impl Earcut64Compatible for [IntPoint] {
+impl<I: IntNumber> Earcut64Compatible for [IntPoint<I>] {
     #[inline(always)]
     fn is_earcut_compatible(&self) -> bool {
         self.len() <= 64

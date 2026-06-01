@@ -1,51 +1,52 @@
 use crate::int::monotone::v_segment::VSegment;
 use alloc::vec;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_float::triangle::Triangle;
 use i_overlay::i_shape::int::shape::IntShape;
 use i_tree::key::exp::KeyExpCollection;
 use i_tree::key::tree::KeyExpTree;
-use i_tree::ExpiredKey;
+use i_tree::{Expiration, ExpiredKey};
 
 #[derive(Debug, Clone, Copy)]
-struct ShapeEdge {
-    a: IntPoint,
-    b: IntPoint,
+struct ShapeEdge<I: IntNumber> {
+    a: IntPoint<I>,
+    b: IntPoint<I>,
     shape_index: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct VEdge {
-    min_y: i32,
-    max_y: i32,
-    x: i32,
+struct VEdge<I: IntNumber> {
+    min_y: I,
+    max_y: I,
+    x: I,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct TargetSegment {
-    edge: ShapeEdge,
-    v_segment: VSegment,
+struct TargetSegment<I: IntNumber> {
+    edge: ShapeEdge<I>,
+    v_segment: VSegment<I>,
 }
 
-impl ExpiredKey<i32> for VSegment {
-    fn expiration(&self) -> i32 {
+impl<I: IntNumber + Expiration> ExpiredKey<I> for VSegment<I> {
+    fn expiration(&self) -> I {
         self.b.x
     }
 }
 
-pub(super) trait SteinerInference {
-    fn group_by_shapes(&self, points: &[IntPoint]) -> Vec<Vec<IntPoint>>;
+pub(super) trait SteinerInference<I: IntNumber> {
+    fn group_by_shapes(&self, points: &[IntPoint<I>]) -> Vec<Vec<IntPoint<I>>>;
 }
 
-impl SteinerInference for [IntShape] {
-    fn group_by_shapes(&self, points: &[IntPoint]) -> Vec<Vec<IntPoint>> {
+impl<I: IntNumber + Expiration> SteinerInference<I> for [IntShape<I>] {
+    fn group_by_shapes(&self, points: &[IntPoint<I>]) -> Vec<Vec<IntPoint<I>>> {
         if points.is_empty() {
             return vec![Vec::new(); self.len()];
         }
 
         let mut points = points.to_vec();
-        points.sort_unstable_by(|a, b| a.x.cmp(&b.x));
+        points.sort_unstable_by_key(|p| p.x);
         points.dedup();
 
         let x_min = points[0].x;
@@ -91,9 +92,9 @@ impl SteinerInference for [IntShape] {
             return vec![Vec::new(); self.len()];
         }
 
-        segments.sort_unstable_by(|s0, s1| s0.v_segment.a.cmp(&s1.v_segment.a));
-        v_edges.sort_unstable_by(|e0, e1| e0.x.cmp(&e1.x));
-        x_points.sort_unstable_by(|p0, p1| p0.x.cmp(&p1.x));
+        segments.sort_unstable_by_key(|s| s.v_segment.a);
+        v_edges.sort_unstable_by_key(|e| e.x);
+        x_points.sort_unstable_by_key(|p| p.x);
 
         let mut groups = vec![Vec::new(); self.len()];
         let capacity = segments.len().ilog2() as usize;
@@ -168,10 +169,10 @@ impl SteinerInference for [IntShape] {
     }
 }
 
-impl ShapeEdge {
+impl<I: IntNumber> ShapeEdge<I> {
     #[inline]
-    fn not_contains(&self, p: IntPoint) -> bool {
-        Triangle::is_not_line_point(self.a, p, self.b)
+    fn not_contains(&self, p: IntPoint<I>) -> bool {
+        Triangle::is_not_line(self.a, p, self.b)
     }
 
     #[inline]
@@ -180,9 +181,9 @@ impl ShapeEdge {
     }
 }
 
-impl VEdge {
+impl<I: IntNumber> VEdge<I> {
     #[inline]
-    fn new(a: IntPoint, b: IntPoint) -> Self {
+    fn new(a: IntPoint<I>, b: IntPoint<I>) -> Self {
         let (min_y, max_y) = if a.y < b.y { (a.y, b.y) } else { (b.y, a.y) };
 
         Self {
@@ -193,7 +194,7 @@ impl VEdge {
     }
 
     #[inline]
-    fn contains(&self, y: i32) -> bool {
+    fn contains(&self, y: I) -> bool {
         self.min_y <= y && y <= self.max_y
     }
 }
@@ -205,7 +206,7 @@ mod tests {
     use i_overlay::i_float::int::point::IntPoint;
     use i_overlay::i_shape::int::path::IntPath;
 
-    fn path(slice: &[[i32; 2]]) -> IntPath {
+    fn path(slice: &[[i32; 2]]) -> IntPath<i32> {
         slice.iter().map(|p| IntPoint::new(p[0], p[1])).collect()
     }
 

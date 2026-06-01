@@ -2,6 +2,8 @@ use crate::advanced::delaunay::IntDelaunay;
 use crate::geom::triangle::IntTriangle;
 use alloc::vec::Vec;
 use core::iter::FusedIterator;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_float::triangle::Triangle;
 use i_overlay::i_shape::util::reserve::Reserve;
@@ -74,10 +76,20 @@ impl IndexType for usize {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct IntTriangulation<I = u16> {
-    pub points: Vec<IntPoint>,
-    pub indices: Vec<I>,
+#[derive(Debug, Clone)]
+pub struct IntTriangulation<I: IntNumber, N = u16> {
+    pub points: Vec<IntPoint<I>>,
+    pub indices: Vec<N>,
+}
+
+impl<I: IntNumber, N> Default for IntTriangulation<I, N> {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            points: Vec::new(),
+            indices: Vec::new(),
+        }
+    }
 }
 
 /// Iterator over resolved triangles in a flat [`IntTriangulation`].
@@ -85,13 +97,13 @@ pub struct IntTriangulation<I = u16> {
 /// Each item contains the three triangle points addressed by one consecutive
 /// triple in the triangulation index buffer.
 #[derive(Clone)]
-pub struct IntTriangleIterator<'a, I> {
-    points: &'a [IntPoint],
-    indices: core::slice::ChunksExact<'a, I>,
+pub struct IntTriangleIterator<'a, I: IntNumber, N> {
+    points: &'a [IntPoint<I>],
+    indices: core::slice::ChunksExact<'a, N>,
 }
 
-impl<I: IndexType> Iterator for IntTriangleIterator<'_, I> {
-    type Item = [IntPoint; 3];
+impl<I: IntNumber, N: IndexType> Iterator for IntTriangleIterator<'_, I, N> {
+    type Item = [IntPoint<I>; 3];
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -108,14 +120,14 @@ impl<I: IndexType> Iterator for IntTriangleIterator<'_, I> {
     }
 }
 
-impl<I: IndexType> ExactSizeIterator for IntTriangleIterator<'_, I> {
+impl<I: IntNumber, N: IndexType> ExactSizeIterator for IntTriangleIterator<'_, I, N> {
     #[inline]
     fn len(&self) -> usize {
         self.indices.len()
     }
 }
 
-impl<I: IndexType> FusedIterator for IntTriangleIterator<'_, I> {}
+impl<I: IntNumber, N: IndexType> FusedIterator for IntTriangleIterator<'_, I, N> {}
 
 /// A int triangle mesh produced by the triangulation process.
 ///
@@ -125,15 +137,25 @@ impl<I: IndexType> FusedIterator for IntTriangleIterator<'_, I> {}
 ///
 /// Use this when you need detailed control over topology, neighbor tracking, or
 /// advanced mesh manipulation.
-#[derive(Debug, Default)]
-pub struct RawIntTriangulation {
-    pub(crate) triangles: Vec<IntTriangle>,
-    pub(crate) points: Vec<IntPoint>,
+#[derive(Debug)]
+pub struct RawIntTriangulation<I: IntNumber> {
+    pub(crate) triangles: Vec<IntTriangle<I>>,
+    pub(crate) points: Vec<IntPoint<I>>,
 }
 
-impl RawIntTriangulation {
+impl<I: IntNumber> Default for RawIntTriangulation<I> {
     #[inline]
-    pub(super) fn new(triangles: Vec<IntTriangle>, points: Vec<IntPoint>) -> Self {
+    fn default() -> Self {
+        Self {
+            triangles: Vec::new(),
+            points: Vec::new(),
+        }
+    }
+}
+
+impl<I: IntNumber> RawIntTriangulation<I> {
+    #[inline]
+    pub(super) fn new(triangles: Vec<IntTriangle<I>>, points: Vec<IntPoint<I>>) -> Self {
         Self { triangles, points }
     }
 
@@ -147,7 +169,7 @@ impl RawIntTriangulation {
     ///
     /// Each point corresponds to a coordinate used by one or more triangles.
     #[inline]
-    pub fn points(&self) -> &Vec<IntPoint> {
+    pub fn points(&self) -> &Vec<IntPoint<I>> {
         &self.points
     }
 
@@ -155,7 +177,7 @@ impl RawIntTriangulation {
     ///
     /// Each triangle contributes 3 indices into the `points` buffer.
     #[inline]
-    pub fn triangle_indices<I: IndexType>(&self) -> Vec<I> {
+    pub fn triangle_indices<N: IndexType>(&self) -> Vec<N> {
         let mut indices = Vec::new();
         self.triangles.feed_indices(self.points.len(), &mut indices);
         indices
@@ -174,7 +196,7 @@ impl RawIntTriangulation {
     ///
     /// Returns a [`IntTriangulation`] with separate index buffer and point list.
     #[inline]
-    pub fn into_triangulation<I: IndexType>(self) -> IntTriangulation<I> {
+    pub fn into_triangulation<N: IndexType>(self) -> IntTriangulation<I, N> {
         IntTriangulation {
             indices: self.triangle_indices(),
             points: self.points,
@@ -185,7 +207,7 @@ impl RawIntTriangulation {
     ///
     /// Returns a [`IntTriangulation`] with separate index buffer and point list.
     #[inline]
-    pub fn to_triangulation<I: IndexType>(&self) -> IntTriangulation<I> {
+    pub fn to_triangulation<N: IndexType>(&self) -> IntTriangulation<I, N> {
         IntTriangulation {
             indices: self.triangle_indices(),
             points: self.points.as_slice().to_vec(),
@@ -204,7 +226,7 @@ impl RawIntTriangulation {
         }
     }
 }
-impl<I: IndexType> IntTriangulation<I> {
+impl<I: IntNumber, N: IndexType> IntTriangulation<I, N> {
     #[inline]
     pub fn empty() -> Self {
         Self {
@@ -223,7 +245,7 @@ impl<I: IndexType> IntTriangulation<I> {
 
     #[inline]
     pub fn join(&mut self, other: &Self) {
-        let points_offset = I::try_from(self.points.len()).unwrap_or(I::ZERO);
+        let points_offset = N::try_from(self.points.len()).unwrap_or(N::ZERO);
         for &i in other.indices.iter() {
             self.indices.push(i.add(points_offset));
         }
@@ -235,7 +257,7 @@ impl<I: IndexType> IntTriangulation<I> {
     /// The iterator walks `indices` in exact triples and yields the matching
     /// `[IntPoint; 3]` for each triangle.
     #[inline]
-    pub fn triangles(&self) -> IntTriangleIterator<'_, I> {
+    pub fn triangles(&self) -> IntTriangleIterator<'_, I, N> {
         IntTriangleIterator {
             points: &self.points,
             indices: self.indices.chunks_exact(3),
@@ -251,7 +273,7 @@ impl<I: IndexType> IntTriangulation<I> {
     }
 
     #[inline]
-    pub fn fill_with_raw(&mut self, triangulation: &RawIntTriangulation) {
+    pub fn fill_with_raw(&mut self, triangulation: &RawIntTriangulation<I>) {
         self.points.clear();
         self.points.extend_from_slice(&triangulation.points);
 
@@ -261,7 +283,7 @@ impl<I: IndexType> IntTriangulation<I> {
     }
 
     #[inline]
-    pub fn fill_with_delaunay(&mut self, delaunay: &IntDelaunay) {
+    pub fn fill_with_delaunay(&mut self, delaunay: &IntDelaunay<I>) {
         self.points.clear();
         self.points.extend_from_slice(&delaunay.points);
 
@@ -310,16 +332,16 @@ mod tests {
 }
 
 pub(crate) trait IndicesBuilder {
-    fn feed_indices<I: IndexType>(&self, max_count: usize, indices: &mut Vec<I>);
+    fn feed_indices<N: IndexType>(&self, max_count: usize, indices: &mut Vec<N>);
 }
 
-impl IndicesBuilder for [IntTriangle] {
+impl<I: IntNumber> IndicesBuilder for [IntTriangle<I>] {
     #[inline]
-    fn feed_indices<I: IndexType>(&self, max_count: usize, indices: &mut Vec<I>) {
-        if max_count > I::MAX {
+    fn feed_indices<N: IndexType>(&self, max_count: usize, indices: &mut Vec<N>) {
+        if max_count > N::MAX {
             panic!(
                 "Index type `{}` cannot hold {} points",
-                core::any::type_name::<I>(),
+                core::any::type_name::<N>(),
                 max_count
             );
         }
@@ -329,9 +351,9 @@ impl IndicesBuilder for [IntTriangle] {
         indices.clear();
 
         for t in self.iter() {
-            let i0 = unsafe { I::try_from(t.vertices[0].index).unwrap_unchecked() };
-            let i1 = unsafe { I::try_from(t.vertices[1].index).unwrap_unchecked() };
-            let i2 = unsafe { I::try_from(t.vertices[2].index).unwrap_unchecked() };
+            let i0 = unsafe { N::try_from(t.vertices[0].index).unwrap_unchecked() };
+            let i1 = unsafe { N::try_from(t.vertices[1].index).unwrap_unchecked() };
+            let i2 = unsafe { N::try_from(t.vertices[2].index).unwrap_unchecked() };
             indices.push(i0);
             indices.push(i1);
             indices.push(i2);
@@ -339,14 +361,14 @@ impl IndicesBuilder for [IntTriangle] {
     }
 }
 
-impl RawIntTriangulation {
+impl<I: IntNumber> RawIntTriangulation<I> {
     pub fn validate(&self) {
         for (i, t) in self.triangles.iter().enumerate() {
             let a = t.vertices[0].point;
             let b = t.vertices[1].point;
             let c = t.vertices[2].point;
-            let area = Triangle::area_two_point(a, b, c);
-            assert!(area <= 0);
+            let area = Triangle::area_two(a, b, c);
+            assert!(area >= I::Wide::ZERO);
 
             let n0 = t.neighbors[0];
             let n1 = t.neighbors[1];
@@ -364,23 +386,23 @@ impl RawIntTriangulation {
         }
     }
 
-    pub fn area_two(&self) -> i64 {
-        let mut s = 0;
+    pub fn area_two(&self) -> I::Wide {
+        let mut s = I::Wide::ZERO;
         for t in self.triangles.iter() {
             let a = t.vertices[0].point;
             let b = t.vertices[1].point;
             let c = t.vertices[2].point;
 
-            s += Triangle::area_two_point(a, b, c);
+            s = s + Triangle::area_two(a, b, c);
         }
         s
     }
 }
 
 #[cfg(test)]
-impl<I: IndexType> IntTriangulation<I> {
-    pub fn validate(&self, shape_x2_area: i64) {
-        let mut s = 0;
+impl<I: IntNumber, N: IndexType> IntTriangulation<I, N> {
+    pub fn validate(&self, shape_x2_area: I::Wide) {
+        let mut s = I::Wide::ZERO;
         let mut i = 0;
         while i < self.indices.len() {
             let ai = self.indices[i];
@@ -394,9 +416,9 @@ impl<I: IndexType> IntTriangulation<I> {
             let b = self.points[bi.into_usize()];
             let c = self.points[ci.into_usize()];
 
-            let abc = Triangle::area_two_point(a, b, c);
+            let abc = Triangle::area_two(a, b, c);
 
-            assert!(abc < 0);
+            assert!(abc > I::Wide::ZERO);
 
             s = s + abc;
         }

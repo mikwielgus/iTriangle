@@ -1,7 +1,10 @@
 use crate::int::solver::{ContourSolver, ShapeSolver, ShapesSolver};
 use crate::int::triangulation::RawIntTriangulation;
+use i_key_sort::sort::key::SortKey;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
+use i_tree::{Expiration, LayoutNumber};
 /// A trait for performing triangulation with default validation settings.
 ///
 /// Provides a simplified interface for converting shapes or contours into triangle meshes.
@@ -20,50 +23,50 @@ use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
 ///
 /// # Steiner Points
 /// Use [`triangulate_with_steiner_points`] to inject additional internal points during triangulation.
-pub trait IntTriangulatable {
+pub trait IntTriangulatable<I: IntNumber> {
     /// Triangulates the shape(s) with automatic validation and cleanup.
     ///
     /// Uses the default [`DisposableTriangulator`] (non-zero fill rule, zero area threshold).
-    fn triangulate(&self) -> RawIntTriangulation;
+    fn triangulate(&self) -> RawIntTriangulation<I>;
 
     /// Triangulates the shape(s) with inserted Steiner points.
     ///
     /// Points must lie within the shape's valid interior area (not on edges).
-    fn triangulate_with_steiner_points(&self, points: &[IntPoint]) -> RawIntTriangulation;
+    fn triangulate_with_steiner_points(&self, points: &[IntPoint<I>]) -> RawIntTriangulation<I>;
 }
 
-impl IntTriangulatable for IntContour {
+impl<I: IntNumber + Expiration + LayoutNumber + SortKey> IntTriangulatable<I> for IntContour<I> {
     #[inline]
-    fn triangulate(&self) -> RawIntTriangulation {
+    fn triangulate(&self) -> RawIntTriangulation<I> {
         ContourSolver::triangulate(Default::default(), self)
     }
 
     #[inline]
-    fn triangulate_with_steiner_points(&self, points: &[IntPoint]) -> RawIntTriangulation {
+    fn triangulate_with_steiner_points(&self, points: &[IntPoint<I>]) -> RawIntTriangulation<I> {
         ContourSolver::triangulate_with_steiner_points(Default::default(), self, points)
     }
 }
 
-impl IntTriangulatable for IntShape {
+impl<I: IntNumber + Expiration + LayoutNumber + SortKey> IntTriangulatable<I> for IntShape<I> {
     #[inline]
-    fn triangulate(&self) -> RawIntTriangulation {
+    fn triangulate(&self) -> RawIntTriangulation<I> {
         ShapeSolver::triangulate(Default::default(), self)
     }
 
     #[inline]
-    fn triangulate_with_steiner_points(&self, points: &[IntPoint]) -> RawIntTriangulation {
+    fn triangulate_with_steiner_points(&self, points: &[IntPoint<I>]) -> RawIntTriangulation<I> {
         ShapeSolver::triangulate_with_steiner_points(Default::default(), self, points)
     }
 }
 
-impl IntTriangulatable for IntShapes {
+impl<I: IntNumber + Expiration + LayoutNumber + SortKey> IntTriangulatable<I> for IntShapes<I> {
     #[inline]
-    fn triangulate(&self) -> RawIntTriangulation {
+    fn triangulate(&self) -> RawIntTriangulation<I> {
         ShapesSolver::triangulate(Default::default(), self)
     }
 
     #[inline]
-    fn triangulate_with_steiner_points(&self, points: &[IntPoint]) -> RawIntTriangulation {
+    fn triangulate_with_steiner_points(&self, points: &[IntPoint<I>]) -> RawIntTriangulation<I> {
         ShapesSolver::triangulate_with_steiner_points(Default::default(), self, points)
     }
 }

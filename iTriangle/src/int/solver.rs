@@ -4,9 +4,12 @@ use crate::int::triangulation::RawIntTriangulation;
 use crate::int::unchecked::IntUncheckedTriangulatable;
 use crate::int::validation::Validation;
 use alloc::vec::Vec;
+use i_key_sort::sort::key::SortKey;
 use i_overlay::core::simplify::Simplify;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
+use i_tree::{Expiration, LayoutNumber};
 
 pub(super) struct ShapesSolver;
 pub(super) struct ShapeSolver;
@@ -14,12 +17,17 @@ pub(super) struct ContourSolver;
 
 impl ShapesSolver {
     #[inline]
-    pub(super) fn triangulate(validation: Validation, shapes: &IntShapes) -> RawIntTriangulation {
+    pub(super) fn triangulate<I: IntNumber + Expiration + LayoutNumber + SortKey>(
+        validation: Validation<I>,
+        shapes: &IntShapes<I>,
+    ) -> RawIntTriangulation<I> {
         let shapes = shapes.simplify(validation.fill_rule, validation.options);
         Self::uncheck_triangulate(&shapes)
     }
 
-    pub(super) fn uncheck_triangulate(shapes: &IntShapes) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate<I: IntNumber + Expiration + SortKey>(
+        shapes: &IntShapes<I>,
+    ) -> RawIntTriangulation<I> {
         if shapes.len() <= 1 {
             return if let Some(first) = shapes.first() {
                 first.uncheck_triangulate()
@@ -60,20 +68,22 @@ impl ShapesSolver {
     }
 
     #[inline]
-    pub(super) fn triangulate_with_steiner_points(
-        validation: Validation,
-        shapes: &IntShapes,
-        points: &[IntPoint],
-    ) -> RawIntTriangulation {
+    pub(super) fn triangulate_with_steiner_points<
+        I: IntNumber + Expiration + LayoutNumber + SortKey,
+    >(
+        validation: Validation<I>,
+        shapes: &IntShapes<I>,
+        points: &[IntPoint<I>],
+    ) -> RawIntTriangulation<I> {
         shapes
             .simplify(validation.fill_rule, validation.options)
             .uncheck_triangulate_with_steiner_points(points)
     }
 
-    pub(super) fn uncheck_triangulate_with_steiner_points(
-        shapes: &IntShapes,
-        groups: &[Vec<IntPoint>],
-    ) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate_with_steiner_points<I: IntNumber + Expiration + SortKey>(
+        shapes: &IntShapes<I>,
+        groups: &[Vec<IntPoint<I>>],
+    ) -> RawIntTriangulation<I> {
         if shapes.len() <= 1 {
             return if let Some(first) = shapes.first() {
                 first.uncheck_triangulate_with_steiner_points(&groups[0])
@@ -123,34 +133,41 @@ impl ShapesSolver {
 
 impl ShapeSolver {
     #[inline]
-    pub(super) fn triangulate(validation: Validation, shape: &IntShape) -> RawIntTriangulation {
+    pub(super) fn triangulate<I: IntNumber + Expiration + LayoutNumber + SortKey>(
+        validation: Validation<I>,
+        shape: &IntShape<I>,
+    ) -> RawIntTriangulation<I> {
         let shapes = shape.simplify(validation.fill_rule, validation.options);
         ShapesSolver::uncheck_triangulate(&shapes)
     }
 
     #[inline]
-    pub(super) fn uncheck_triangulate(shape: &IntShape) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate<I: IntNumber + SortKey>(
+        shape: &IntShape<I>,
+    ) -> RawIntTriangulation<I> {
         let mut raw = RawIntTriangulation::default();
         MonotoneTriangulator::default().shape_into_net_triangulation(shape, None, &mut raw);
         raw
     }
 
     #[inline]
-    pub(super) fn triangulate_with_steiner_points(
-        validation: Validation,
-        shape: &IntShape,
-        points: &[IntPoint],
-    ) -> RawIntTriangulation {
+    pub(super) fn triangulate_with_steiner_points<
+        I: IntNumber + Expiration + LayoutNumber + SortKey,
+    >(
+        validation: Validation<I>,
+        shape: &IntShape<I>,
+        points: &[IntPoint<I>],
+    ) -> RawIntTriangulation<I> {
         shape
             .simplify(validation.fill_rule, validation.options)
             .uncheck_triangulate_with_steiner_points(points)
     }
 
     #[inline]
-    pub(super) fn uncheck_triangulate_with_steiner_points(
-        shape: &IntShape,
-        points: &[IntPoint],
-    ) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate_with_steiner_points<I: IntNumber + SortKey>(
+        shape: &IntShape<I>,
+        points: &[IntPoint<I>],
+    ) -> RawIntTriangulation<I> {
         if shape.len() <= 1 {
             return if let Some(first) = shape.first() {
                 first.uncheck_triangulate_with_steiner_points(points)
@@ -166,14 +183,19 @@ impl ShapeSolver {
 
 impl ContourSolver {
     #[inline]
-    pub(super) fn triangulate(validation: Validation, contour: &IntContour) -> RawIntTriangulation {
+    pub(super) fn triangulate<I: IntNumber + Expiration + LayoutNumber + SortKey>(
+        validation: Validation<I>,
+        contour: &IntContour<I>,
+    ) -> RawIntTriangulation<I> {
         contour
             .simplify(validation.fill_rule, validation.options)
             .uncheck_triangulate()
     }
 
     #[inline]
-    pub(super) fn uncheck_triangulate(contour: &IntContour) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate<I: IntNumber + SortKey>(
+        contour: &IntContour<I>,
+    ) -> RawIntTriangulation<I> {
         if contour.len() < 3 {
             RawIntTriangulation::default()
         } else {
@@ -184,21 +206,23 @@ impl ContourSolver {
     }
 
     #[inline]
-    pub(super) fn triangulate_with_steiner_points(
-        validation: Validation,
-        contour: &IntContour,
-        points: &[IntPoint],
-    ) -> RawIntTriangulation {
+    pub(super) fn triangulate_with_steiner_points<
+        I: IntNumber + Expiration + LayoutNumber + SortKey,
+    >(
+        validation: Validation<I>,
+        contour: &IntContour<I>,
+        points: &[IntPoint<I>],
+    ) -> RawIntTriangulation<I> {
         contour
             .simplify(validation.fill_rule, validation.options)
             .uncheck_triangulate_with_steiner_points(points)
     }
 
     #[inline]
-    pub(super) fn uncheck_triangulate_with_steiner_points(
-        contour: &IntContour,
-        points: &[IntPoint],
-    ) -> RawIntTriangulation {
+    pub(super) fn uncheck_triangulate_with_steiner_points<I: IntNumber + SortKey>(
+        contour: &IntContour<I>,
+        points: &[IntPoint<I>],
+    ) -> RawIntTriangulation<I> {
         if contour.len() < 3 {
             Default::default()
         } else {

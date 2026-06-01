@@ -1,28 +1,29 @@
 use crate::geom::point::IndexPoint;
+use i_overlay::i_float::int::number::int::IntNumber;
 
 #[derive(Debug, Clone)]
-pub struct Abc {
-    pub v0: ABCVertex,
-    pub v1: ABCVertex,
-    pub v2: ABCVertex,
+pub struct Abc<I: IntNumber> {
+    pub v0: ABCVertex<I>,
+    pub v1: ABCVertex<I>,
+    pub v2: ABCVertex<I>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct ABCVertex {
-    pub vertex: IndexPoint,
+pub struct ABCVertex<I: IntNumber> {
+    pub vertex: IndexPoint<I>,
     pub position: usize,
     pub neighbor: usize,
 }
 
 #[derive(Debug, Clone)]
-pub struct IntTriangle {
-    pub vertices: [IndexPoint; 3],
+pub struct IntTriangle<I: IntNumber> {
+    pub vertices: [IndexPoint<I>; 3],
     pub neighbors: [usize; 3],
 }
 
-impl IntTriangle {
+impl<I: IntNumber> IntTriangle<I> {
     #[inline]
-    pub fn abc(a: IndexPoint, b: IndexPoint, c: IndexPoint) -> Self {
+    pub fn abc(a: IndexPoint<I>, b: IndexPoint<I>, c: IndexPoint<I>) -> Self {
         Self {
             vertices: [a, b, c],
             neighbors: [usize::MAX; 3],
@@ -81,7 +82,7 @@ impl IntTriangle {
     }
 
     #[inline]
-    pub(crate) fn abc_by_neighbor(&self, neighbor: usize) -> Abc {
+    pub(crate) fn abc_by_neighbor(&self, neighbor: usize) -> Abc<I> {
         if neighbor == self.neighbors[0] {
             self.abc_by_a()
         } else if neighbor == self.neighbors[1] {
@@ -92,7 +93,7 @@ impl IntTriangle {
     }
 
     #[inline]
-    pub(crate) fn abc_by_a(&self) -> Abc {
+    pub(crate) fn abc_by_a(&self) -> Abc<I> {
         let a = ABCVertex {
             vertex: self.vertices[0],
             position: 0,
@@ -116,7 +117,7 @@ impl IntTriangle {
     }
 
     #[inline]
-    pub(crate) fn abc_by_b(&self) -> Abc {
+    pub(crate) fn abc_by_b(&self) -> Abc<I> {
         let a = ABCVertex {
             vertex: self.vertices[1],
             position: 1,
@@ -140,7 +141,7 @@ impl IntTriangle {
     }
 
     #[inline]
-    pub(crate) fn abc_by_c(&self) -> Abc {
+    pub(crate) fn abc_by_c(&self) -> Abc<I> {
         let a = ABCVertex {
             vertex: self.vertices[2],
             position: 2,

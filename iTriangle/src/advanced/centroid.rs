@@ -2,11 +2,14 @@ use crate::advanced::delaunay::IntDelaunay;
 use crate::geom::triangle::IntTriangle;
 use alloc::vec;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::uint::UIntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::int::area::Area;
 use i_overlay::i_shape::int::shape::IntContour;
 
-impl IntDelaunay {
+impl<I: IntNumber> IntDelaunay<I> {
     /// Constructs a centroid-based polygonal net from the Delaunay triangulation.
     /// Each polygon surrounds a vertex using adjacent triangle centers and edge midpoints.
     ///
@@ -17,7 +20,7 @@ impl IntDelaunay {
     ///
     /// # Returns
     /// A list of `IntContour` objects forming closed or convex polygonal regions.
-    pub fn centroid_net(&self, min_area: u64) -> Vec<IntContour> {
+    pub fn centroid_net(&self, min_area: I::WideUInt) -> Vec<IntContour<I>> {
         let two_area = min_area << 1;
         let n = self.triangles.len();
 
@@ -33,7 +36,7 @@ impl IntDelaunay {
 
                 // go in counter-clockwise direction first
 
-                let mut contour = IntContour::with_capacity(16);
+                let mut contour = IntContour::<I>::with_capacity(16);
                 let mut t = &self.triangles[triangle_index];
                 let (mut next_index, mut mid) = t.left_neighbor_and_mid_edge(v.index);
                 contour.push(t.center());
@@ -76,21 +79,21 @@ impl IntDelaunay {
     }
 }
 
-trait SafeAdd {
-    fn add_area_check(&mut self, contour: IntContour, two_area: u64);
+trait SafeAdd<I: IntNumber> {
+    fn add_area_check(&mut self, contour: IntContour<I>, two_area: I::WideUInt);
 }
 
-impl SafeAdd for Vec<IntContour> {
-    fn add_area_check(&mut self, contour: IntContour, two_area: u64) {
-        if two_area == 0 || contour.area_two().unsigned_abs() > two_area {
+impl<I: IntNumber> SafeAdd<I> for Vec<IntContour<I>> {
+    fn add_area_check(&mut self, contour: IntContour<I>, two_area: I::WideUInt) {
+        if two_area == I::WideUInt::ZERO || contour.area_two().unsigned_abs() > two_area {
             self.push(contour);
         }
     }
 }
 
-impl IntTriangle {
+impl<I: IntNumber> IntTriangle<I> {
     #[inline]
-    fn right_neighbor_and_mid_edge(&self, vertex_index: usize) -> (usize, IntPoint) {
+    fn right_neighbor_and_mid_edge(&self, vertex_index: usize) -> (usize, IntPoint<I>) {
         if self.vertices[0].index == vertex_index {
             let neighbor = self.neighbors[2];
             let mid = middle(self.vertices[0].point, self.vertices[1].point);
@@ -107,7 +110,7 @@ impl IntTriangle {
     }
 
     #[inline]
-    fn left_neighbor_and_mid_edge(&self, vertex_index: usize) -> (usize, IntPoint) {
+    fn left_neighbor_and_mid_edge(&self, vertex_index: usize) -> (usize, IntPoint<I>) {
         if self.vertices[0].index == vertex_index {
             let neighbor = self.neighbors[1];
             let mid = middle(self.vertices[0].point, self.vertices[2].point);
@@ -124,23 +127,29 @@ impl IntTriangle {
     }
 
     #[inline]
-    fn center(&self) -> IntPoint {
+    fn center(&self) -> IntPoint<I> {
         let a = self.vertices[0].point;
         let b = self.vertices[1].point;
         let c = self.vertices[2].point;
 
-        let x = a.x as i64 + b.x as i64 + c.x as i64;
-        let y = a.y as i64 + b.y as i64 + c.y as i64;
+        let x = a.x.wide() + b.x.wide() + c.x.wide();
+        let y = a.y.wide() + b.y.wide() + c.y.wide();
 
-        IntPoint::new((x / 3) as i32, (y / 3) as i32)
+        IntPoint::new(
+            I::from_wide(x / I::Wide::from_usize(3)),
+            I::from_wide(y / I::Wide::from_usize(3)),
+        )
     }
 }
 
 #[inline]
-fn middle(a: IntPoint, b: IntPoint) -> IntPoint {
-    let x = a.x as i64 + b.x as i64;
-    let y = a.y as i64 + b.y as i64;
-    IntPoint::new((x / 2) as i32, (y / 2) as i32)
+fn middle<I: IntNumber>(a: IntPoint<I>, b: IntPoint<I>) -> IntPoint<I> {
+    let x = a.x.wide() + b.x.wide();
+    let y = a.y.wide() + b.y.wide();
+    IntPoint::new(
+        I::from_wide(x / I::Wide::TWO),
+        I::from_wide(y / I::Wide::TWO),
+    )
 }
 
 #[cfg(test)]
@@ -161,7 +170,7 @@ mod tests {
         let centroids = contour
             .triangulate_with_steiner_points(&[IntPoint::new(5, 5)])
             .into_delaunay()
-            .centroid_net(0);
+            .centroid_net(0u64);
         assert_eq!(centroids.len(), 5);
     }
 }

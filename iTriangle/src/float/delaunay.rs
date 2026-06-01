@@ -5,26 +5,27 @@ use crate::int::triangulation::IndexType;
 use alloc::vec::Vec;
 use i_overlay::i_float::adapter::FloatPointAdapter;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_shape::float::adapter::PathToFloat;
 
 /// A Delaunay-refined triangle mesh with float-mapped geometry.
 ///
 /// Produced from [`Triangulation::into_delaunay`] by applying edge flips
 /// to satisfy the Delaunay condition.
-pub struct Delaunay<P: FloatPointCompatible> {
-    pub(super) delaunay: IntDelaunay,
-    pub(super) adapter: FloatPointAdapter<P>,
+pub struct Delaunay<P: FloatPointCompatible, I: IntNumber = i32> {
+    pub(super) delaunay: IntDelaunay<I>,
+    pub(super) adapter: FloatPointAdapter<P, I>,
 }
 
-impl<P: FloatPointCompatible> RawTriangulation<P> {
+impl<P: FloatPointCompatible, I: IntNumber> RawTriangulation<P, I> {
     #[inline]
-    pub fn into_delaunay(self) -> Delaunay<P> {
+    pub fn into_delaunay(self) -> Delaunay<P, I> {
         let mut buffer = DelaunayBuffer::new();
         self.into_delaunay_with_buffer(&mut buffer)
     }
 
     #[inline]
-    pub fn into_delaunay_with_buffer(self, buffer: &mut DelaunayBuffer) -> Delaunay<P> {
+    pub fn into_delaunay_with_buffer(self, buffer: &mut DelaunayBuffer) -> Delaunay<P, I> {
         Delaunay {
             delaunay: self.raw.into_delaunay_with_buffer(buffer),
             adapter: self.adapter,
@@ -32,7 +33,7 @@ impl<P: FloatPointCompatible> RawTriangulation<P> {
     }
 }
 
-impl<P: FloatPointCompatible> Delaunay<P> {
+impl<P: FloatPointCompatible, I: IntNumber> Delaunay<P, I> {
     /// Returns the float-mapped vertex positions in the triangulation.
     #[inline]
     pub fn points(&self) -> Vec<P> {
@@ -41,7 +42,7 @@ impl<P: FloatPointCompatible> Delaunay<P> {
 
     /// Returns indices forming counter-clockwise triangles.
     #[inline]
-    pub fn triangle_indices<I: IndexType>(&self) -> Vec<I> {
+    pub fn triangle_indices<N: IndexType>(&self) -> Vec<N> {
         self.delaunay.triangle_indices()
     }
 
@@ -53,7 +54,7 @@ impl<P: FloatPointCompatible> Delaunay<P> {
 
     /// Converts this refined mesh into a flat float [`Triangulation`].
     #[inline]
-    pub fn to_triangulation<I: IndexType>(&self) -> Triangulation<P, I> {
+    pub fn to_triangulation<N: IndexType>(&self) -> Triangulation<P, N> {
         Triangulation {
             indices: self.triangle_indices(),
             points: self.points(),

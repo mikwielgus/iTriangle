@@ -6,29 +6,30 @@ use crate::int::triangulation::{IndexType, IntTriangulation};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::triangle::Triangle;
 use i_overlay::i_shape::util::reserve::Reserve;
 use i_tree::set::list::SetList;
 use i_tree::set::sort::SetCollection;
 use i_tree::set::tree::SetTree;
 
-struct FlatBuilder<'a, I> {
-    triangulation: &'a mut IntTriangulation<I>,
+struct FlatBuilder<'a, I: IntNumber, N: IndexType> {
+    triangulation: &'a mut IntTriangulation<I, N>,
 }
 
-pub(crate) trait FlatTriangulation {
-    fn flat_triangulate_into<I: IndexType>(
+pub(crate) trait FlatTriangulation<I: IntNumber> {
+    fn flat_triangulate_into<N: IndexType>(
         &self,
         triangles_count: usize,
-        triangulation: &mut IntTriangulation<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     );
 }
 
-impl FlatTriangulation for [ChainVertex] {
-    fn flat_triangulate_into<I: IndexType>(
+impl<I: IntNumber> FlatTriangulation<I> for [ChainVertex<I>] {
+    fn flat_triangulate_into<N: IndexType>(
         &self,
         triangles_count: usize,
-        triangulation: &mut IntTriangulation<I>,
+        triangulation: &mut IntTriangulation<I, N>,
     ) {
         triangulation.indices.reserve_capacity(triangles_count);
         triangulation.indices.clear();
@@ -47,17 +48,17 @@ impl FlatTriangulation for [ChainVertex] {
     }
 }
 
-impl<'a, I> FlatBuilder<'a, I> {
-    fn new(triangulation: &'a mut IntTriangulation<I>) -> Self {
+impl<'a, I: IntNumber, N: IndexType> FlatBuilder<'a, I, N> {
+    fn new(triangulation: &'a mut IntTriangulation<I, N>) -> Self {
         Self { triangulation }
     }
 }
 
-impl<I: IndexType> FlatBuilder<'_, I> {
+impl<I: IntNumber, N: IndexType> FlatBuilder<'_, I, N> {
     #[inline]
-    fn triangulate<S: SetCollection<VSegment, FlatSection>>(
+    fn triangulate<S: SetCollection<VSegment<I>, FlatSection<I>>>(
         &mut self,
-        vertices: &[ChainVertex],
+        vertices: &[ChainVertex<I>],
         mut store: S,
     ) {
         for v in vertices.iter() {
@@ -73,7 +74,11 @@ impl<I: IndexType> FlatBuilder<'_, I> {
     }
 
     #[inline]
-    fn join<S: SetCollection<VSegment, FlatSection>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn join<S: SetCollection<VSegment<I>, FlatSection<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         if section.sort.b == v.this {
@@ -84,7 +89,11 @@ impl<I: IndexType> FlatBuilder<'_, I> {
     }
 
     #[inline]
-    fn start<S: SetCollection<VSegment, FlatSection>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn start<S: SetCollection<VSegment<I>, FlatSection<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let section = FlatSection {
             sort: VSegment {
                 a: v.this,
@@ -96,7 +105,11 @@ impl<I: IndexType> FlatBuilder<'_, I> {
     }
 
     #[inline]
-    fn end<S: SetCollection<VSegment, FlatSection>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn end<S: SetCollection<VSegment<I>, FlatSection<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         section.add_as_last(v, &mut self.triangulation.indices);
@@ -104,14 +117,22 @@ impl<I: IndexType> FlatBuilder<'_, I> {
     }
 
     #[inline]
-    fn split<S: SetCollection<VSegment, FlatSection>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn split<S: SetCollection<VSegment<I>, FlatSection<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let index = tree.find_section(v);
         let section = unsafe { tree.value_by_index_mut(index) };
         let new_section = section.add_to_middle(v, &mut self.triangulation.indices);
         tree.insert(new_section);
     }
 
-    fn merge<S: SetCollection<VSegment, FlatSection>>(&mut self, v: &ChainVertex, tree: &mut S) {
+    fn merge<S: SetCollection<VSegment<I>, FlatSection<I>>>(
+        &mut self,
+        v: &ChainVertex<I>,
+        tree: &mut S,
+    ) {
         let prev_index = tree.find_section(v);
         let next_index = tree.index_before(prev_index);
         let next = unsafe { tree.value_by_index_mut(next_index) };
@@ -137,9 +158,9 @@ impl<I: IndexType> FlatBuilder<'_, I> {
     }
 }
 
-impl FlatSection {
+impl<I: IntNumber> FlatSection<I> {
     #[inline]
-    fn add_as_last<I: IndexType>(&mut self, v: &ChainVertex, triangles: &mut Vec<I>) {
+    fn add_as_last<N: IndexType>(&mut self, v: &ChainVertex<I>, triangles: &mut Vec<N>) {
         debug_assert!(self.points.len() >= 2);
 
         let a = v.index_point();
@@ -149,12 +170,12 @@ impl FlatSection {
     }
 
     #[inline]
-    fn add_to_top<I: IndexType>(&mut self, v: &ChainVertex, triangles: &mut Vec<I>) {
+    fn add_to_top<N: IndexType>(&mut self, v: &ChainVertex<I>, triangles: &mut Vec<N>) {
         self.add_from_start(v, triangles);
     }
 
     #[inline]
-    fn add_to_bottom<I: IndexType>(&mut self, v: &ChainVertex, triangles: &mut Vec<I>) {
+    fn add_to_bottom<N: IndexType>(&mut self, v: &ChainVertex<I>, triangles: &mut Vec<N>) {
         self.sort = VSegment {
             a: v.this,
             b: v.next,
@@ -162,11 +183,11 @@ impl FlatSection {
         self.add_from_end(v, triangles);
     }
 
-    fn add_to_middle<I: IndexType>(
+    fn add_to_middle<N: IndexType>(
         &mut self,
-        v: &ChainVertex,
-        triangles: &mut Vec<I>,
-    ) -> FlatSection {
+        v: &ChainVertex<I>,
+        triangles: &mut Vec<N>,
+    ) -> FlatSection<I> {
         debug_assert!(!self.points.is_empty());
         let a = v.index_point();
         let mut b = self.points[0];
@@ -191,7 +212,7 @@ impl FlatSection {
         let mut i = 1;
         while i < self.points.len() {
             let c = self.points[i];
-            if Triangle::is_cw_or_line_point(a.point, b.point, c.point) {
+            if Triangle::is_cw_or_line(a.point, b.point, c.point) {
                 i += 1;
                 b = c;
                 continue;
@@ -204,11 +225,11 @@ impl FlatSection {
             // we still must split section
             // peak the closest point by x to a.x
             let mut split_index = 0;
-            let mut min_dist = i32::MAX;
+            let mut min_dist = None;
             for (i, v) in self.points.iter().enumerate() {
-                let dist = a.point.x - v.point.x;
-                if dist < min_dist {
-                    min_dist = dist;
+                let dist = a.point.x.wide() - v.point.x.wide();
+                if min_dist.is_none_or(|min_dist| dist < min_dist) {
+                    min_dist = Some(dist);
                     split_index = i;
                 }
             }
@@ -236,7 +257,7 @@ impl FlatSection {
             let mut n = 0;
             while i < bottom_points.len() {
                 let c = bottom_points[i];
-                if Triangle::is_cw_or_line_point(a.point, b.point, c.point) {
+                if Triangle::is_cw_or_line(a.point, b.point, c.point) {
                     break;
                 }
                 triangles.add_abc(a.index, b.index, bottom_points[i].index);
@@ -267,7 +288,7 @@ impl FlatSection {
         }
     }
 
-    fn add_from_start<I: IndexType>(&mut self, v: &ChainVertex, triangles: &mut Vec<I>) {
+    fn add_from_start<N: IndexType>(&mut self, v: &ChainVertex<I>, triangles: &mut Vec<N>) {
         let a = v.index_point();
         debug_assert!(!self.points.is_empty());
         if self.points.len() <= 1 {
@@ -278,7 +299,7 @@ impl FlatSection {
         let mut n = 0;
         let mut b = *self.points.first().unwrap();
         for &c in self.points.iter().skip(1) {
-            if Triangle::is_cw_or_line_point(a.point, b.point, c.point) {
+            if Triangle::is_cw_or_line(a.point, b.point, c.point) {
                 break;
             }
             n += 1;
@@ -296,7 +317,7 @@ impl FlatSection {
         }
     }
 
-    fn add_from_end<I: IndexType>(&mut self, v: &ChainVertex, triangles: &mut Vec<I>) {
+    fn add_from_end<N: IndexType>(&mut self, v: &ChainVertex<I>, triangles: &mut Vec<N>) {
         let a = v.index_point();
         debug_assert!(!self.points.is_empty());
         if self.points.len() <= 1 {
@@ -307,7 +328,7 @@ impl FlatSection {
         let mut n = 0;
         let mut c = *self.points.last().unwrap();
         for &b in self.points.iter().rev().skip(1) {
-            if Triangle::is_cw_or_line_point(a.point, b.point, c.point) {
+            if Triangle::is_cw_or_line(a.point, b.point, c.point) {
                 break;
             }
             n += 1;
@@ -334,16 +355,17 @@ impl<I: IndexType> AddTriangle for Vec<I> {
     }
 }
 
-trait FindSection {
-    fn find_section(&self, v: &ChainVertex) -> u32;
+trait FindSection<I: IntNumber> {
+    fn find_section(&self, v: &ChainVertex<I>) -> u32;
 }
 
-impl<C> FindSection for C
+impl<I, C> FindSection<I> for C
 where
-    C: SetCollection<VSegment, FlatSection>,
+    I: IntNumber,
+    C: SetCollection<VSegment<I>, FlatSection<I>>,
 {
     #[inline]
-    fn find_section(&self, v: &ChainVertex) -> u32 {
+    fn find_section(&self, v: &ChainVertex<I>) -> u32 {
         self.first_index_less_by(|s| {
             let point_search = s.is_under_point_order(v.this);
             match point_search {
@@ -351,7 +373,7 @@ where
                     if v.prev == s.a {
                         Ordering::Equal
                     } else {
-                        Triangle::clock_order_point(s.a, v.next, s.b)
+                        Triangle::clock_order(s.a, v.next, s.b)
                     }
                 }
                 _ => point_search,
@@ -376,7 +398,7 @@ mod tests {
     use i_overlay::i_shape::int::path::IntPath;
     use rand::RngExt;
 
-    fn path(slice: &[[i32; 2]]) -> IntPath {
+    fn path(slice: &[[i32; 2]]) -> IntPath<i32> {
         slice.iter().map(|p| IntPoint::new(p[0], p[1])).collect()
     }
 
@@ -390,7 +412,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -407,7 +429,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -424,7 +446,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -441,7 +463,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -458,7 +480,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -477,7 +499,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 4);
@@ -497,7 +519,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 5);
@@ -515,7 +537,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 3);
@@ -536,7 +558,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 6);
@@ -559,7 +581,7 @@ mod tests {
         ]];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 8);
@@ -577,7 +599,7 @@ mod tests {
         ];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 16);
@@ -596,7 +618,7 @@ mod tests {
         ];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 24);
@@ -629,7 +651,7 @@ mod tests {
         ];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 16);
@@ -650,7 +672,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 6);
@@ -664,7 +686,7 @@ mod tests {
 
         let shape_area = s.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 3);
@@ -676,7 +698,7 @@ mod tests {
         let shape = vec![path(&[[0, 2], [2, 0], [5, 0], [4, 6]])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 2);
@@ -688,7 +710,7 @@ mod tests {
         let shape = vec![path(&[[0, 4], [-4, -3], [-2, -2], [1, -2], [0, -1]])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 3);
@@ -709,7 +731,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 6);
@@ -729,7 +751,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 5);
@@ -748,7 +770,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 4);
@@ -768,7 +790,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 5);
@@ -789,7 +811,7 @@ mod tests {
         ])];
         let shape_area = shape.area_two();
 
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         MonotoneTriangulator::default().shape_into_flat_triangulation(&shape, &mut raw);
 
         assert_eq!(raw.indices.len() / 3, 6);
@@ -798,7 +820,7 @@ mod tests {
 
     #[test]
     fn test_random_0() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..100_000 {
             let path = random(8, 5);
             let shape = vec![path];
@@ -817,7 +839,7 @@ mod tests {
 
     #[test]
     fn test_random_1() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..100_000 {
             let path = random(10, 6);
             let shape = vec![path];
@@ -836,7 +858,7 @@ mod tests {
 
     #[test]
     fn test_random_2() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..100_000 {
             let path = random(10, 12);
             let shape = vec![path];
@@ -855,7 +877,7 @@ mod tests {
 
     #[test]
     fn test_random_3() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..50_000 {
             let path = random(20, 20);
             let shape = vec![path];
@@ -874,7 +896,7 @@ mod tests {
 
     #[test]
     fn test_random_4() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..5_000 {
             let path = random(30, 50);
             let shape = vec![path];
@@ -893,7 +915,7 @@ mod tests {
 
     #[test]
     fn test_random_5() {
-        let mut raw = IntTriangulation::<u32>::default();
+        let mut raw = IntTriangulation::<i32, u32>::default();
         for _ in 0..2_000 {
             let main = random(50, 20);
             let mut shape = vec![main];
@@ -914,7 +936,7 @@ mod tests {
         }
     }
 
-    fn random(radius: i32, n: usize) -> IntPath {
+    fn random(radius: i32, n: usize) -> IntPath<i32> {
         let a = radius / 2;
         let mut points = Vec::with_capacity(n);
         let mut rng = rand::rng();

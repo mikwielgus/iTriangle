@@ -1,16 +1,18 @@
 use core::cmp::Ordering;
 use core::ptr;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_float::triangle::Triangle;
 
 const CLOCK_ORDER_HEAP_LEN: usize = 3;
 
-pub(super) type ClockOrderHeap = FixedHeap<IntPoint, ClockOrderCompare, CLOCK_ORDER_HEAP_LEN>;
+pub(super) type ClockOrderHeap<I> =
+    FixedHeap<IntPoint<I>, ClockOrderCompare<I>, CLOCK_ORDER_HEAP_LEN>;
 
-impl ClockOrderHeap {
+impl<I: IntNumber> ClockOrderHeap<I> {
     #[inline(always)]
-    pub(super) fn with_center(center: IntPoint) -> Self {
-        Self::new(ClockOrderCompare { center })
+    pub(super) fn with_center(center: IntPoint<I>) -> Self {
+        Self::new(ClockOrderCompare { center }, IntPoint::ZERO)
     }
 }
 
@@ -18,14 +20,14 @@ pub(super) trait Compare<T> {
     fn compare(&self, a: &T, b: &T) -> Ordering;
 }
 
-pub(super) struct ClockOrderCompare {
-    center: IntPoint,
+pub(super) struct ClockOrderCompare<I: IntNumber> {
+    center: IntPoint<I>,
 }
 
-impl Compare<IntPoint> for ClockOrderCompare {
+impl<I: IntNumber> Compare<IntPoint<I>> for ClockOrderCompare<I> {
     #[inline(always)]
-    fn compare(&self, a: &IntPoint, b: &IntPoint) -> Ordering {
-        Triangle::clock_order_point(self.center, *a, *b)
+    fn compare(&self, a: &IntPoint<I>, b: &IntPoint<I>) -> Ordering {
+        Triangle::clock_order(self.center, *a, *b)
     }
 }
 
@@ -36,13 +38,13 @@ pub(super) struct FixedHeap<T, C: Compare<T>, const N: usize> {
     buffer: [T; N],
 }
 
-impl<T: Default + Copy, C: Compare<T>, const N: usize> FixedHeap<T, C, N> {
+impl<T: Copy, C: Compare<T>, const N: usize> FixedHeap<T, C, N> {
     #[inline(always)]
-    pub(super) fn new(comparator: C) -> Self {
+    pub(super) fn new(comparator: C, empty: T) -> Self {
         Self {
             count: 0,
             overflow: false,
-            buffer: [T::default(); N],
+            buffer: [empty; N],
             comparator,
         }
     }
@@ -174,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_min_heap_0() {
-        let mut heap = FixedHeap::<i32, Min, CAP>::new(Min);
+        let mut heap = FixedHeap::<i32, Min, CAP>::new(Min, 0);
         for &v in &[30, 10, 50, 20] {
             heap.add(v);
         }
@@ -185,7 +187,7 @@ mod tests {
 
     #[test]
     fn test_min_heap_1() {
-        let mut heap = FixedHeap::<i32, Min, 7>::new(Min);
+        let mut heap = FixedHeap::<i32, Min, 7>::new(Min, 0);
         for &v in &[5, 5, 4, 4, 3, 2, 1, 0, 0, 0] {
             heap.add(v);
         }
@@ -196,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_max_heap() {
-        let mut heap = FixedHeap::<i32, Max, CAP>::new(Max);
+        let mut heap = FixedHeap::<i32, Max, CAP>::new(Max, 0);
         for &v in &[30, 10, 50, 20] {
             heap.add(v);
         }
@@ -224,7 +226,7 @@ mod tests {
 
         heap.sort_in_place();
 
-        points.sort_unstable_by(|a, b| Triangle::clock_order_point(c, *b, *a));
+        points.sort_unstable_by(|a, b| Triangle::clock_order(c, *b, *a));
 
         assert_eq!(
             heap.buffer[0..CLOCK_ORDER_HEAP_LEN],
@@ -251,7 +253,7 @@ mod tests {
 
         heap.sort_in_place();
 
-        points.sort_unstable_by(|a, b| Triangle::clock_order_point(c, *b, *a));
+        points.sort_unstable_by(|a, b| Triangle::clock_order(c, *b, *a));
 
         assert_eq!(
             heap.buffer[0..CLOCK_ORDER_HEAP_LEN],
@@ -268,7 +270,7 @@ mod tests {
         heap.add(points[1]);
 
         heap.sort_in_place();
-        points.sort_unstable_by(|a, b| Triangle::clock_order_point(c, *b, *a));
+        points.sort_unstable_by(|a, b| Triangle::clock_order(c, *b, *a));
 
         assert_eq!(heap.buffer[0..2], points);
     }
@@ -294,7 +296,7 @@ mod tests {
 
         heap.sort_in_place();
 
-        points.sort_unstable_by(|a, b| Triangle::clock_order_point(c, *b, *a));
+        points.sort_unstable_by(|a, b| Triangle::clock_order(c, *b, *a));
 
         assert_eq!(
             heap.buffer[0..CLOCK_ORDER_HEAP_LEN],

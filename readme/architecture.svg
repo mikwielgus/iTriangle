@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 1080 620"
+   role="img"
+   aria-labelledby="title desc"
+   version="1.1"
+   id="svg43"
+   sodipodi:docname="architecture.svg"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   width="1080"
+   height="620"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview43"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="2.2449317"
+     inkscape:cx="558.14615"
+     inkscape:cy="404.46664"
+     inkscape:window-width="2128"
+     inkscape:window-height="1193"
+     inkscape:window-x="86"
+     inkscape:window-y="30"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg43" />
+  <title
+     id="title">iTriangle architecture overview</title>
+  <desc
+     id="desc">Input contours are normalized, sweep-line triangulated, optionally refined into Delaunay, tessellation, convex decomposition, centroid net, and triangle index outputs.</desc>
+  <defs
+     id="defs4">
+    <filter
+       id="cardShadow"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       color-interpolation-filters="sRGB">
+      <feDropShadow
+         dx="0"
+         dy="10"
+         stdDeviation="10"
+         flood-color="#111827"
+         flood-opacity="0.14" />
+    </filter>
+    <marker
+       id="arrowBlue"
+       viewBox="0 0 14 14"
+       refX="11"
+       refY="7"
+       markerWidth="11"
+       markerHeight="11"
+       orient="auto-start-reverse">
+      <path
+         d="M 1,1 13,7 1,13 4.4,7 Z"
+         fill="#4f7cff"
+         id="path1" />
+    </marker>
+    <marker
+       id="arrowTeal"
+       viewBox="0 0 14 14"
+       refX="11"
+       refY="7"
+       markerWidth="11"
+       markerHeight="11"
+       orient="auto-start-reverse">
+      <path
+         d="M 1,1 13,7 1,13 4.4,7 Z"
+         fill="#0f9f8f"
+         id="path2" />
+    </marker>
+    <marker
+       id="arrowAmber"
+       viewBox="0 0 14 14"
+       refX="11"
+       refY="7"
+       markerWidth="11"
+       markerHeight="11"
+       orient="auto-start-reverse">
+      <path
+         d="M 1,1 13,7 1,13 4.4,7 Z"
+         fill="#e9851d"
+         id="path3" />
+    </marker>
+    <marker
+       id="arrowRose"
+       viewBox="0 0 14 14"
+       refX="11"
+       refY="7"
+       markerWidth="11"
+       markerHeight="11"
+       orient="auto-start-reverse">
+      <path
+         d="M 1,1 13,7 1,13 4.4,7 Z"
+         fill="#d84c79"
+         id="path4" />
+    </marker>
+    <style
+       id="style4">
+      .node {
+        filter: url(#cardShadow);
+        stroke: rgba(15, 23, 42, 0.20);
+        stroke-width: 1.5;
+      }
+      .node-title {
+        fill: #111827;
+        font: 700 18px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .node-subtitle {
+        fill: #334155;
+        font: 600 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .label {
+        fill: #1f2937;
+        font: 700 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+        letter-spacing: 0;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .label-bg {
+        fill: rgba(255, 255, 255, 0.92);
+        stroke: rgba(15, 23, 42, 0.12);
+      }
+      .arrow {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 3.5;
+      }
+      .blue { stroke: #4f7cff; }
+      .teal { stroke: #0f9f8f; }
+      .amber { stroke: #e9851d; }
+      .rose { stroke: #d84c79; }
+    </style>
+  </defs>
+  <path
+     class="arrow blue"
+     marker-end="url(#arrowBlue)"
+     d="m 240,106 h 60"
+     id="path6"
+     style="stroke-linecap:round;stroke-linejoin:miter;paint-order:markers stroke fill" />
+  <path
+     class="arrow blue"
+     marker-end="url(#arrowBlue)"
+     d="m 524,106 h 70"
+     id="path8" />
+  <path
+     class="arrow blue"
+     marker-end="url(#arrowBlue)"
+     d="m 708,138 v 68"
+     id="path10" />
+  <path
+     class="arrow teal"
+     marker-end="url(#arrowTeal)"
+     d="m 708,278 v 78"
+     id="path12" />
+  <path
+     class="arrow amber"
+     marker-end="url(#arrowAmber)"
+     d="m 822,246 h 28"
+     id="path14"
+     sodipodi:nodetypes="cc" />
+  <path
+     class="arrow rose"
+     marker-end="url(#arrowRose)"
+     d="m 594,399 -70,-1"
+     id="path16"
+     sodipodi:nodetypes="cc" />
+  <path
+     class="arrow teal"
+     marker-end="url(#arrowTeal)"
+     d="m 708,428 v 78"
+     id="path20" />
+  <path
+     class="arrow teal"
+     marker-end="url(#arrowTeal)"
+     d="m 818,400 c 48,26 70,62 82,106"
+     id="path22"
+     sodipodi:nodetypes="cc" />
+  <path
+     class="arrow amber"
+     marker-end="url(#arrowAmber)"
+     d="m 822,386 c 68,-34 58.00335,-84.00176 1.00335,-120.00176"
+     id="path24"
+     sodipodi:nodetypes="cc" />
+  <g
+     transform="translate(60,70)"
+     id="g27">
+    <rect
+       class="node"
+       width="180"
+       height="72"
+       rx="16"
+       fill="#d7e8ff"
+       id="rect26"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="90"
+       y="29"
+       id="text26"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Input</text>
+    <text
+       class="node-subtitle"
+       x="90"
+       y="51"
+       id="text27"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">contours</text>
+  </g>
+  <g
+     transform="translate(304,70)"
+     id="g29">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#ddf7ee"
+       id="rect27"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text28"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Normalize</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text29"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">fix intersections</text>
+  </g>
+  <g
+     transform="translate(598,70)"
+     id="g31">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#ffe8c7"
+       id="rect29"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text30"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Sweep-line</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text31"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
+  </g>
+  <g
+     transform="translate(598,210)"
+     id="g33">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#f1e4ff"
+       id="rect31"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text32"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Raw</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text33"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
+  </g>
+  <g
+     transform="translate(598,360)"
+     id="g35">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#dbf7ff"
+       id="rect33"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text34"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Delaunay</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text35"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
+  </g>
+  <g
+     transform="translate(300,360)"
+     id="g37">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#ffe0ec"
+       id="rect35"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text36"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Tessellation</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text37"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">refinement</text>
+  </g>
+  <g
+     transform="translate(598,510)"
+     id="g39">
+    <rect
+       class="node"
+       width="220"
+       height="72"
+       rx="16"
+       fill="#e5f8d8"
+       id="rect37"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="110"
+       y="28"
+       id="text38"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Convex</text>
+    <text
+       class="node-subtitle"
+       x="110"
+       y="51"
+       id="text39"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">decomposition</text>
+  </g>
+  <g
+     transform="translate(852,510)"
+     id="g41">
+    <rect
+       class="node"
+       width="170"
+       height="72"
+       rx="16"
+       fill="#ffedd5"
+       id="rect39"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="85"
+       y="28"
+       id="text40"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Centroid</text>
+    <text
+       class="node-subtitle"
+       x="85"
+       y="51"
+       id="text41"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">net</text>
+  </g>
+  <g
+     transform="translate(854,210)"
+     id="g43">
+    <rect
+       class="node"
+       width="170"
+       height="72"
+       rx="16"
+       fill="#ede9fe"
+       id="rect41"
+       x="0"
+       y="0" />
+    <text
+       class="node-title"
+       x="85"
+       y="28"
+       id="text42"
+       style="font-style:normal;font-variant:normal;font-weight:700;font-stretch:normal;font-size:18px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">Triangles</text>
+    <text
+       class="node-subtitle"
+       x="85"
+       y="51"
+       id="text43"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">and indices</text>
+  </g>
+  <metadata
+     id="metadata1">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>iTriangle architecture overview</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

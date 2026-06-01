@@ -1,6 +1,9 @@
 use alloc::vec;
 use alloc::vec::Vec;
+use i_key_sort::sort::key::SortKey;
 use i_key_sort::sort::two_keys::TwoKeysSort;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::rect::IntRect;
 use i_overlay::i_shape::int::IntPoint;
 
@@ -9,22 +12,23 @@ use crate::{
     location::{PointLocationInTriangulation, TriangleIndex},
 };
 
-pub trait IntPointInTriangulationLocator {
-    fn locate_points(&self, points: &[IntPoint]) -> Vec<PointLocationInTriangulation>;
+pub trait IntPointInTriangulationLocator<I: IntNumber> {
+    fn locate_points(&self, points: &[IntPoint<I>]) -> Vec<PointLocationInTriangulation>;
 }
 
-impl<I> IntPointInTriangulationLocator for I
+impl<I, T> IntPointInTriangulationLocator<I> for T
 where
-    I: Iterator<Item = [IntPoint; 3]> + Clone,
+    I: IntNumber + SortKey,
+    T: Iterator<Item = [IntPoint<I>; 3]> + Clone,
 {
-    fn locate_points(&self, points: &[IntPoint]) -> Vec<PointLocationInTriangulation> {
+    fn locate_points(&self, points: &[IntPoint<I>]) -> Vec<PointLocationInTriangulation> {
         locate_points_in_triangles(self.clone(), points)
     }
 }
 
-fn locate_points_in_triangles(
-    triangles: impl Iterator<Item = [IntPoint; 3]>,
-    points: &[IntPoint],
+fn locate_points_in_triangles<I: IntNumber + SortKey>(
+    triangles: impl Iterator<Item = [IntPoint<I>; 3]>,
+    points: &[IntPoint<I>],
 ) -> Vec<PointLocationInTriangulation> {
     let mut result = vec![PointLocationInTriangulation::Outside; points.len()];
     let mut sorted_points: Vec<_> = points
@@ -97,9 +101,9 @@ fn locate_points_in_triangles(
 }
 
 #[derive(Clone, Copy)]
-struct IndexedPoint {
+struct IndexedPoint<I: IntNumber> {
     index: usize,
-    point: IntPoint,
+    point: IntPoint<I>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -111,39 +115,33 @@ enum PointLocationInTriangle {
 }
 
 trait IntPointInTriangleLocator {
-    fn locate_point(&self, point: IntPoint) -> PointLocationInTriangle;
+    type Int: IntNumber;
+    fn locate_point(&self, point: IntPoint<Self::Int>) -> PointLocationInTriangle;
 
-    fn boundary(&self) -> IntRect;
+    fn boundary(&self) -> IntRect<Self::Int>;
 }
 
-impl IntPointInTriangleLocator for [IntPoint; 3] {
+impl<I: IntNumber> IntPointInTriangleLocator for [IntPoint<I>; 3] {
+    type Int = I;
+
     #[inline]
-    fn locate_point(&self, point: IntPoint) -> PointLocationInTriangle {
+    fn locate_point(&self, point: IntPoint<I>) -> PointLocationInTriangle {
         let [p0, p1, p2] = *self;
 
         if point == p0 || point == p1 || point == p2 {
             return PointLocationInTriangle::OnVertex;
         }
 
-        let px = point.x as i64;
-        let py = point.y as i64;
-        let x0 = p0.x as i64;
-        let y0 = p0.y as i64;
-        let x1 = p1.x as i64;
-        let y1 = p1.y as i64;
-        let x2 = p2.x as i64;
-        let y2 = p2.y as i64;
+        let q0 = (point - p1).cross_product(p0 - p1);
+        let q1 = (point - p2).cross_product(p1 - p2);
+        let q2 = (point - p0).cross_product(p2 - p0);
 
-        let q0 = (px - x1) * (y0 - y1) - (py - y1) * (x0 - x1);
-        let q1 = (px - x2) * (y1 - y2) - (py - y2) * (x1 - x2);
-        let q2 = (px - x0) * (y2 - y0) - (py - y0) * (x2 - x0);
-
-        let has_neg = q0 < 0 || q1 < 0 || q2 < 0;
-        let has_pos = q0 > 0 || q1 > 0 || q2 > 0;
+        let has_neg = q0 < I::Wide::ZERO || q1 < I::Wide::ZERO || q2 < I::Wide::ZERO;
+        let has_pos = q0 > I::Wide::ZERO || q1 > I::Wide::ZERO || q2 > I::Wide::ZERO;
 
         if has_neg && has_pos {
             PointLocationInTriangle::Outside
-        } else if q0 == 0 || q1 == 0 || q2 == 0 {
+        } else if q0 == I::Wide::ZERO || q1 == I::Wide::ZERO || q2 == I::Wide::ZERO {
             PointLocationInTriangle::OnEdge
         } else {
             PointLocationInTriangle::Inside
@@ -151,7 +149,7 @@ impl IntPointInTriangleLocator for [IntPoint; 3] {
     }
 
     #[inline]
-    fn boundary(&self) -> IntRect {
+    fn boundary(&self) -> IntRect<I> {
         let mut rect = IntRect::with_point(self[0]);
         rect.unsafe_add_point(&self[1]);
         rect.unsafe_add_point(&self[2]);
@@ -159,16 +157,18 @@ impl IntPointInTriangleLocator for [IntPoint; 3] {
     }
 }
 
-impl<I: IndexType> IntTriangulation<I> {
+impl<I: IntNumber + SortKey, N: IndexType> IntTriangulation<I, N> {
     #[inline]
-    pub fn locate_points(&self, points: &[IntPoint]) -> Vec<PointLocationInTriangulation> {
+    pub fn locate_points(&self, points: &[IntPoint<I>]) -> Vec<PointLocationInTriangulation> {
         locate_points_in_triangles(self.triangles(), points)
     }
 }
 
-impl<I: IndexType> IntPointInTriangulationLocator for IntTriangulation<I> {
+impl<I: IntNumber + SortKey, N: IndexType> IntPointInTriangulationLocator<I>
+    for IntTriangulation<I, N>
+{
     #[inline]
-    fn locate_points(&self, points: &[IntPoint]) -> Vec<PointLocationInTriangulation> {
+    fn locate_points(&self, points: &[IntPoint<I>]) -> Vec<PointLocationInTriangulation> {
         IntTriangulation::locate_points(self, points)
     }
 }
@@ -184,7 +184,7 @@ mod tests {
     use i_overlay::i_shape::int::IntPoint;
     use i_overlay::i_shape::int_path;
 
-    fn square_triangulation() -> IntTriangulation<u16> {
+    fn square_triangulation() -> IntTriangulation<i32, u16> {
         IntTriangulation {
             points: vec![
                 IntPoint::new(0, 0),
@@ -225,7 +225,7 @@ mod tests {
             fill_rule: Default::default(),
             options: IntOverlayOptions::keep_all_points(),
         };
-        let mut triangulator = IntTriangulator::<u16>::new(32, validation, Default::default());
+        let mut triangulator = IntTriangulator::<i32, u16>::new(32, validation, Default::default());
         triangulator.delaunay = true;
         let triangulation = triangulator.triangulate_contour(&path);
 

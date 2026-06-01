@@ -47,26 +47,7 @@ iTriangle is a high-performance 2D polygon triangulation library for Rust. It so
 
 ## Architecture Overview
 
-<img src="readme/architecture.png" width="700"/>
-
-<details>
-<summary>Mermaid source</summary>
-
-```mermaid
-flowchart TD
-    A[Input contours] --> B[Normalize and fix self-intersections]
-    B --> C[Sweep-line triangulation]
-    C --> D[Raw triangulation]
-    D -->|Delaunay| E[Delaunay triangulation]
-    D --> I[Triangles and indices]
-    E -->|Tessellation| F[Adaptive refinement]
-    F --> E
-    E --> G[Convex decomposition]
-    E --> H[Centroid net]
-    E --> I
-```
-
-</details>
+<img src="readme/architecture.svg" width="700"/>
 
 ## Quick Start
 
@@ -91,6 +72,29 @@ let contour = vec![
 
 let triangulation = vec![contour].triangulate().to_triangulation::<u16>();
 println!("triangles: {}", triangulation.indices.len() / 3);
+```
+
+By default, float input is converted to the robust integer core using `i32`
+coordinates. If your geometry needs a different integer precision, choose it
+explicitly:
+
+```rust
+use i_triangle::float::triangulatable::Triangulatable;
+use i_triangle::float::triangulator::Triangulator;
+
+let shape = vec![vec![
+    [0.0, 0.0],
+    [10.0, 0.0],
+    [10.0, 10.0],
+    [0.0, 10.0],
+]];
+
+// One-shot triangulation with i64 integer coordinates.
+let mesh = shape.triangulate_as::<i64>().to_triangulation::<u32>();
+
+// Reusable triangulator: first generic is index type, second is coordinate type.
+let mut triangulator = Triangulator::<u32, i64>::default();
+let mesh = triangulator.triangulate(&shape);
 ```
 
 ## Documentation
@@ -192,6 +196,7 @@ let contours = vec![
     vec![[5.0, 0.0], [9.0, 0.0], [9.0, 4.0], [5.0, 4.0]],
 ];
 
+// Uses u32 triangle indices and the default i32 integer coordinate solver.
 let mut triangulator = Triangulator::<u32>::default();
 
 // Enable Delaunay refinement
@@ -256,8 +261,8 @@ let contours = vec![
     ],
 ];
 
-let mut triangulator = IntTriangulator::<u32>::default();
-let mut output = IntTriangulation::<u32>::default();
+let mut triangulator = IntTriangulator::<i32, u32>::default();
+let mut output = IntTriangulation::<i32, u32>::default();
 
 for contour in &contours {
     triangulator.triangulate_contour_into(contour.clone(), &mut output);

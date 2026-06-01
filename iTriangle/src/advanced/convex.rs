@@ -3,16 +3,18 @@ use crate::geom::triangle::IntTriangle;
 use crate::index::Index;
 use alloc::vec;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::int::shape::IntContour;
 use i_overlay::i_shape::int::simple::Simplify;
 
 #[derive(Debug, Clone, Copy)]
-struct Node {
+struct Node<I: IntNumber> {
     next: usize,
     index: usize,
     prev: usize,
-    point: IntPoint,
+    point: IntPoint<I>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -23,12 +25,12 @@ struct Edge {
     b: usize,
 }
 
-struct ConvexPolygonBuilder {
-    nodes: Vec<Node>,
+struct ConvexPolygonBuilder<I: IntNumber> {
+    nodes: Vec<Node<I>>,
     edges: Vec<Edge>,
 }
 
-impl ConvexPolygonBuilder {
+impl<I: IntNumber> ConvexPolygonBuilder<I> {
     fn new() -> Self {
         Self {
             nodes: Vec::with_capacity(16),
@@ -36,7 +38,7 @@ impl ConvexPolygonBuilder {
         }
     }
 
-    fn to_contour(&self) -> IntContour {
+    fn to_contour(&self) -> IntContour<I> {
         let count = self.nodes.len();
         let mut contour = Vec::with_capacity(count);
 
@@ -51,7 +53,7 @@ impl ConvexPolygonBuilder {
         contour
     }
 
-    fn start(&mut self, triangle_index: usize, triangle: &IntTriangle) {
+    fn start(&mut self, triangle_index: usize, triangle: &IntTriangle<I>) {
         self.nodes.clear();
         self.edges.clear();
 
@@ -110,7 +112,7 @@ impl ConvexPolygonBuilder {
         }
     }
 
-    fn add(&mut self, edge: Edge, triangle: &IntTriangle) -> bool {
+    fn add(&mut self, edge: Edge, triangle: &IntTriangle<I>) -> bool {
         let v_index = triangle.opposite(edge.triangle_index);
         let v = triangle.vertices[v_index];
 
@@ -120,11 +122,11 @@ impl ConvexPolygonBuilder {
         let va0 = self.nodes[node_a1.prev].point;
         let va1 = node_a1.point;
 
-        let aa = va1.subtract(va0);
-        let ap = v.point.subtract(va1);
+        let aa = va1 - va0;
+        let ap = v.point - va1;
 
         let apa = aa.cross_product(ap);
-        if apa < 0 {
+        if apa < I::Wide::ZERO {
             return false;
         }
 
@@ -134,11 +136,11 @@ impl ConvexPolygonBuilder {
         let vb0 = self.nodes[node_b1.next].point;
         let vb1 = node_b1.point;
 
-        let bb = vb0.subtract(vb1);
-        let bp = vb1.subtract(v.point);
+        let bb = vb0 - vb1;
+        let bp = vb1 - v.point;
 
         let bpb = bp.cross_product(bb);
-        if bpb < 0 {
+        if bpb < I::Wide::ZERO {
             return false;
         }
 
@@ -185,7 +187,7 @@ impl ConvexPolygonBuilder {
     }
 }
 
-impl IntDelaunay {
+impl<I: IntNumber> IntDelaunay<I> {
     /// Groups adjacent triangles into convex polygons in counter-clockwise order.
     ///
     /// This method traverses the Delaunay triangulation and greedily merges
@@ -209,7 +211,7 @@ impl IntDelaunay {
     /// let polygons = triangulation.to_convex_polygons();
     /// assert!(!polygons.is_empty());
     /// ```
-    pub fn to_convex_polygons(&self) -> Vec<IntContour> {
+    pub fn to_convex_polygons(&self) -> Vec<IntContour<I>> {
         let mut result = Vec::new();
         let n = self.triangles.len();
 
@@ -250,7 +252,7 @@ mod tests {
     use i_overlay::i_shape::int::area::Area;
     use i_overlay::i_shape::int::path::IntPath;
 
-    fn path(slice: &[[i32; 2]]) -> IntPath {
+    fn path(slice: &[[i32; 2]]) -> IntPath<i32> {
         slice.iter().map(|p| IntPoint::new(p[0], p[1])).collect()
     }
 
@@ -261,8 +263,8 @@ mod tests {
 
         assert_eq!(polygons.len(), 2);
 
-        assert!(polygons[0].area_two() < 0);
-        assert!(polygons[1].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
+        assert!(polygons[1].area_two() > 0);
     }
 
     #[test]
@@ -272,7 +274,7 @@ mod tests {
 
         assert_eq!(polygons.len(), 1);
 
-        assert!(polygons[0].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
     }
 
     #[test]
@@ -295,8 +297,8 @@ mod tests {
 
         assert_eq!(polygons.len(), 3);
 
-        assert!(polygons[0].area_two() < 0);
-        assert!(polygons[1].area_two() < 0);
-        assert!(polygons[2].area_two() < 0);
+        assert!(polygons[0].area_two() > 0);
+        assert!(polygons[1].area_two() > 0);
+        assert!(polygons[2].area_two() > 0);
     }
 }

@@ -3,8 +3,11 @@ use crate::advanced::buffer::DelaunayBuffer;
 use crate::geom::triangle::IntTriangle;
 use crate::int::triangulation::RawIntTriangulation;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::number::product_uint::UIntProduct;
+use i_overlay::i_float::int::number::uint::UIntNumber;
+use i_overlay::i_float::int::number::wide_int::WideIntNumber;
 use i_overlay::i_float::int::point::IntPoint;
-use i_overlay::i_float::u128::UInt128;
 
 /// A 2D integer-based Delaunay triangulation.
 /// Each triangle satisfies the Delaunay condition.
@@ -13,14 +16,14 @@ use i_overlay::i_float::u128::UInt128;
 /// - `triangles`: A list of `IntTriangle` elements (triangle vertex indices and neighbors)
 /// - `points`: A list of `IntPoint` elements (original and inserted points)
 ///
-pub struct IntDelaunay {
-    pub triangles: Vec<IntTriangle>,
-    pub points: Vec<IntPoint>,
+pub struct IntDelaunay<I: IntNumber> {
+    pub triangles: Vec<IntTriangle<I>>,
+    pub points: Vec<IntPoint<I>>,
 }
 
-impl IntDelaunay {
+impl<I: IntNumber> IntDelaunay<I> {
     #[inline]
-    pub(crate) fn into_raw(self) -> RawIntTriangulation {
+    pub(crate) fn into_raw(self) -> RawIntTriangulation<I> {
         RawIntTriangulation {
             triangles: self.triangles,
             points: self.points,
@@ -28,7 +31,7 @@ impl IntDelaunay {
     }
 }
 
-impl RawIntTriangulation {
+impl<I: IntNumber> RawIntTriangulation<I> {
     /// Converts an int triangle mesh into a Delaunay triangulation by applying edge flips.
     ///
     /// The mesh is refined in-place by checking local angle conditions and
@@ -37,7 +40,7 @@ impl RawIntTriangulation {
     /// # Returns
     /// A new [`IntDelaunay`] structure with updated triangle connectivity.
     #[inline]
-    pub fn into_delaunay(self) -> IntDelaunay {
+    pub fn into_delaunay(self) -> IntDelaunay<I> {
         let mut buffer = DelaunayBuffer::new();
         self.into_delaunay_with_buffer(&mut buffer)
     }
@@ -49,7 +52,7 @@ impl RawIntTriangulation {
     /// # Returns
     /// A new [`IntDelaunay`] structure with updated triangle connectivity.
     #[inline]
-    pub fn into_delaunay_with_buffer(self, buffer: &mut DelaunayBuffer) -> IntDelaunay {
+    pub fn into_delaunay_with_buffer(self, buffer: &mut DelaunayBuffer) -> IntDelaunay<I> {
         let mut delaunay = IntDelaunay {
             triangles: self.triangles,
             points: self.points,
@@ -61,7 +64,7 @@ impl RawIntTriangulation {
     }
 }
 
-pub trait DelaunayRefine {
+pub trait DelaunayRefine<I: IntNumber> {
     fn build(&mut self);
     fn build_with_buffer(&mut self, buffer: &mut DelaunayBuffer);
     fn fix_triangles(&mut self, buffer: &mut Vec<usize>, bitset: &mut IndexBitSet);
@@ -70,7 +73,7 @@ pub trait DelaunayRefine {
     fn swap_triangles(&mut self, abc_index: usize, pcb_index: usize) -> bool;
 }
 
-impl DelaunayRefine for [IntTriangle] {
+impl<I: IntNumber> DelaunayRefine<I> for [IntTriangle<I>] {
     #[inline]
     fn build(&mut self) {
         let mut buffer = DelaunayBuffer::new();
@@ -188,29 +191,34 @@ impl DelaunayCondition {
     // return true if triangle satisfied condition and do not need flip triangles
     // more detail explanation and demo https://ishape-rust.github.io/iShape-js/triangle/delaunay.html
     #[inline]
-    fn is_flip_not_required(p: IntPoint, a: IntPoint, b: IntPoint, c: IntPoint) -> bool {
+    fn is_flip_not_required<I: IntNumber>(
+        p: IntPoint<I>,
+        a: IntPoint<I>,
+        b: IntPoint<I>,
+        c: IntPoint<I>,
+    ) -> bool {
         // x, y of all coordinates must be in range of i32
         // p is a test point
         // b and c common points of triangle abc and pcb
         // alpha (A) is an angle of bpc
         // beta (B) is an angle of cab
 
-        let vbp = b.subtract(p);
-        let vcp = c.subtract(p);
+        let vbp = b - p;
+        let vcp = c - p;
 
-        let vba = b.subtract(a);
-        let vca = c.subtract(a);
+        let vba = b - a;
+        let vca = c - a;
 
         let cos_a = vbp.dot_product(vcp);
         let cos_b = vba.dot_product(vca);
 
-        if cos_a < 0 && cos_b < 0 {
+        if cos_a < I::Wide::ZERO && cos_b < I::Wide::ZERO {
             // A > 90 and B > 90
             // A + B > 180
             return false;
         }
 
-        if cos_a >= 0 && cos_b >= 0 {
+        if cos_a >= I::Wide::ZERO && cos_b >= I::Wide::ZERO {
             // A <= 90 and B <= 90
             // A + B <= 180
             return true;
@@ -219,25 +227,27 @@ impl DelaunayCondition {
         let sn_a = vbp.cross_product(vcp).unsigned_abs(); // A <= 180
         let sn_b = vba.cross_product(vca).unsigned_abs(); // B <= 180
 
-        if cos_a < 0 {
+        if cos_a < I::Wide::ZERO {
             // cosA < 0
             // cosB >= 0
-            let sin_a_cos_b = UInt128::multiply(sn_a, cos_b as u64); // positive
-            let cos_a_sin_b = UInt128::multiply(cos_a.unsigned_abs(), sn_b); // negative
+            let sin_a_cos_b = <I::WideUInt as UIntNumber>::Product::multiply(sn_a, cos_b.to_uint()); // positive
+            let cos_a_sin_b =
+                <I::WideUInt as UIntNumber>::Product::multiply(cos_a.unsigned_abs(), sn_b); // negative
 
             sin_a_cos_b >= cos_a_sin_b
         } else {
             // cosA >= 0
             // cosB < 0
-            let sin_a_cos_b = UInt128::multiply(sn_a, cos_b.unsigned_abs()); // negative
-            let cos_a_sin_b = UInt128::multiply(cos_a as u64, sn_b); // positive
+            let sin_a_cos_b =
+                <I::WideUInt as UIntNumber>::Product::multiply(sn_a, cos_b.unsigned_abs()); // negative
+            let cos_a_sin_b = <I::WideUInt as UIntNumber>::Product::multiply(cos_a.to_uint(), sn_b); // positive
 
             cos_a_sin_b >= sin_a_cos_b
         }
     }
 }
 
-impl IntTriangle {
+impl<I: IntNumber> IntTriangle<I> {
     #[inline]
     fn update_neighbor(&mut self, old_index: usize, new_index: usize) {
         if self.neighbors[0] == old_index {
@@ -252,7 +262,7 @@ impl IntTriangle {
 }
 
 #[cfg(test)]
-impl IntDelaunay {
+impl<I: IntNumber> IntDelaunay<I> {
     fn validate(&self) {
         use i_overlay::i_float::triangle::Triangle;
 
@@ -260,8 +270,8 @@ impl IntDelaunay {
             let a = t.vertices[0].point;
             let b = t.vertices[1].point;
             let c = t.vertices[2].point;
-            let area = Triangle::area_two_point(a, b, c);
-            assert!(area <= 0);
+            let area = Triangle::area_two(a, b, c);
+            assert!(area >= I::Wide::ZERO);
 
             let n0 = t.neighbors[0];
             let n1 = t.neighbors[1];
@@ -279,15 +289,15 @@ impl IntDelaunay {
         }
     }
 
-    fn area(&self) -> i64 {
+    fn area(&self) -> I::Wide {
         use i_overlay::i_float::triangle::Triangle;
-        let mut s = 0;
+        let mut s = I::Wide::ZERO;
         for t in self.triangles.iter() {
             let a = t.vertices[0].point;
             let b = t.vertices[1].point;
             let c = t.vertices[2].point;
 
-            s += Triangle::area_two_point(a, b, c);
+            s = s + Triangle::area_two(a, b, c);
         }
 
         s
@@ -312,7 +322,7 @@ mod tests {
     use i_overlay::i_shape::int::path::IntPath;
     use rand::RngExt;
 
-    fn path(slice: &[[i32; 2]]) -> IntPath {
+    fn path(slice: &[[i32; 2]]) -> IntPath<i32> {
         slice.iter().map(|p| IntPoint::new(p[0], p[1])).collect()
     }
 
@@ -504,7 +514,7 @@ mod tests {
         }
     }
 
-    fn random(radius: i32, n: usize) -> IntPath {
+    fn random(radius: i32, n: usize) -> IntPath<i32> {
         let a = radius / 2;
         let mut points = Vec::with_capacity(n);
         let mut rng = rand::rng();

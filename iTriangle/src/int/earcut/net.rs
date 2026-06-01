@@ -3,6 +3,7 @@ use crate::geom::triangle::IntTriangle;
 use crate::int::earcut::earcut_64::{Bit, EarcutStore};
 use crate::int::triangulation::RawIntTriangulation;
 use alloc::vec::Vec;
+use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::point::IntPoint;
 
 struct TriangleHandler {
@@ -51,15 +52,15 @@ impl EdgePool {
     }
 }
 
-pub(super) struct NetEarcutStore<'a> {
-    triangulation: &'a mut RawIntTriangulation,
+pub(super) struct NetEarcutStore<'a, I: IntNumber> {
+    triangulation: &'a mut RawIntTriangulation<I>,
     pool: EdgePool,
     last: usize,
 }
 
-impl<'a> NetEarcutStore<'a> {
+impl<'a, I: IntNumber> NetEarcutStore<'a, I> {
     #[inline]
-    pub(super) fn new(count: usize, triangulation: &'a mut RawIntTriangulation) -> Self {
+    pub(super) fn new(count: usize, triangulation: &'a mut RawIntTriangulation<I>) -> Self {
         Self {
             last: count - 1,
             triangulation,
@@ -70,9 +71,9 @@ impl<'a> NetEarcutStore<'a> {
     }
 }
 
-impl EarcutStore for NetEarcutStore<'_> {
+impl<I: IntNumber> EarcutStore<I> for NetEarcutStore<'_, I> {
     #[inline]
-    fn collect_triangles(&mut self, contour: &[IntPoint], start: usize, bits: u64, count: u32) {
+    fn collect_triangles(&mut self, contour: &[IntPoint<I>], start: usize, bits: u64, count: u32) {
         let ai = start;
         let a = IndexPoint::new(ai, contour[ai]);
 
@@ -97,7 +98,7 @@ impl EarcutStore for NetEarcutStore<'_> {
     }
 }
 
-impl NetEarcutStore<'_> {
+impl<I: IntNumber> NetEarcutStore<'_, I> {
     #[inline]
     fn get_or_put(&mut self, i0: usize, i1: usize, t: usize, v: usize) -> usize {
         // is edge inner or outer

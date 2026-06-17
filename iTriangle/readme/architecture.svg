@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   viewBox="0 0 1080 620"
+   viewBox="0 0 1200 620"
    role="img"
    aria-labelledby="title desc"
    version="1.1"
    id="svg43"
    sodipodi:docname="architecture.svg"
-   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
-   width="1080"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   width="1200"
    height="620"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -25,12 +25,12 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="2.2449317"
-     inkscape:cx="558.14615"
-     inkscape:cy="404.46664"
+     inkscape:zoom="1.2469288"
+     inkscape:cx="742.22364"
+     inkscape:cy="299.13497"
      inkscape:window-width="2128"
      inkscape:window-height="1193"
-     inkscape:window-x="86"
+     inkscape:window-x="90"
      inkscape:window-y="30"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg43" />
@@ -59,8 +59,8 @@
        viewBox="0 0 14 14"
        refX="11"
        refY="7"
-       markerWidth="11"
-       markerHeight="11"
+       markerWidth="10"
+       markerHeight="10"
        orient="auto-start-reverse">
       <path
          d="M 1,1 13,7 1,13 4.4,7 Z"
@@ -72,8 +72,8 @@
        viewBox="0 0 14 14"
        refX="11"
        refY="7"
-       markerWidth="11"
-       markerHeight="11"
+       markerWidth="10"
+       markerHeight="10"
        orient="auto-start-reverse">
       <path
          d="M 1,1 13,7 1,13 4.4,7 Z"
@@ -85,8 +85,8 @@
        viewBox="0 0 14 14"
        refX="11"
        refY="7"
-       markerWidth="11"
-       markerHeight="11"
+       markerWidth="10"
+       markerHeight="10"
        orient="auto-start-reverse">
       <path
          d="M 1,1 13,7 1,13 4.4,7 Z"
@@ -98,8 +98,8 @@
        viewBox="0 0 14 14"
        refX="11"
        refY="7"
-       markerWidth="11"
-       markerHeight="11"
+       markerWidth="10"
+       markerHeight="10"
        orient="auto-start-reverse">
       <path
          d="M 1,1 13,7 1,13 4.4,7 Z"
@@ -151,55 +151,60 @@
   <path
      class="arrow blue"
      marker-end="url(#arrowBlue)"
-     d="m 240,106 h 60"
+     d="m 204,106 h 56"
      id="path6"
-     style="stroke-linecap:round;stroke-linejoin:miter;paint-order:markers stroke fill" />
+     style="stroke-linecap:round;stroke-linejoin:miter;paint-order:markers stroke fill"
+     sodipodi:nodetypes="cc" />
   <path
      class="arrow blue"
      marker-end="url(#arrowBlue)"
-     d="m 524,106 h 70"
-     id="path8" />
+     d="m 488,106 h 66"
+     id="path8"
+     sodipodi:nodetypes="cc" />
   <path
      class="arrow blue"
      marker-end="url(#arrowBlue)"
-     d="m 708,138 v 68"
-     id="path10" />
+     d="m 668,144 v 62"
+     id="path10"
+     sodipodi:nodetypes="cc" />
   <path
      class="arrow teal"
      marker-end="url(#arrowTeal)"
-     d="m 708,278 v 78"
-     id="path12" />
+     d="m 668,284 v 72"
+     id="path12"
+     sodipodi:nodetypes="cc" />
   <path
      class="arrow amber"
      marker-end="url(#arrowAmber)"
-     d="m 822,246 h 28"
+     d="M 782,246 H 930"
      id="path14"
      sodipodi:nodetypes="cc" />
   <path
      class="arrow rose"
      marker-end="url(#arrowRose)"
-     d="m 594,399 -70,-1"
+     d="m 782,397.78563 118.25056,1"
      id="path16"
      sodipodi:nodetypes="cc" />
   <path
      class="arrow teal"
      marker-end="url(#arrowTeal)"
-     d="m 708,428 v 78"
-     id="path20" />
+     d="m 668,434 v 72"
+     id="path20"
+     sodipodi:nodetypes="cc" />
   <path
      class="arrow teal"
      marker-end="url(#arrowTeal)"
-     d="m 818,400 c 48,26 70,62 82,106"
+     d="m 556.93287,400 c -48.95735,9.24633 -73.82941,60.08529 -82,106"
      id="path22"
      sodipodi:nodetypes="cc" />
   <path
      class="arrow amber"
      marker-end="url(#arrowAmber)"
-     d="m 822,386 c 68,-34 58.00335,-84.00176 1.00335,-120.00176"
+     d="M 782,390 C 845.38576,372.03471 900.0848,333.07649 933.06701,279.64039"
      id="path24"
      sodipodi:nodetypes="cc" />
   <g
-     transform="translate(60,70)"
+     transform="translate(20,70)"
      id="g27">
     <rect
        class="node"
@@ -224,7 +229,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">contours</text>
   </g>
   <g
-     transform="translate(304,70)"
+     transform="translate(264,70)"
      id="g29">
     <rect
        class="node"
@@ -249,7 +254,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">fix intersections</text>
   </g>
   <g
-     transform="translate(598,70)"
+     transform="translate(558,70)"
      id="g31">
     <rect
        class="node"
@@ -274,7 +279,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
   </g>
   <g
-     transform="translate(598,210)"
+     transform="translate(558,210)"
      id="g33">
     <rect
        class="node"
@@ -299,7 +304,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
   </g>
   <g
-     transform="translate(598,360)"
+     transform="translate(558,360)"
      id="g35">
     <rect
        class="node"
@@ -324,7 +329,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">triangulation</text>
   </g>
   <g
-     transform="translate(300,360)"
+     transform="translate(906,360)"
      id="g37">
     <rect
        class="node"
@@ -349,7 +354,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">refinement</text>
   </g>
   <g
-     transform="translate(598,510)"
+     transform="translate(558,510)"
      id="g39">
     <rect
        class="node"
@@ -374,7 +379,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">decomposition</text>
   </g>
   <g
-     transform="translate(852,510)"
+     transform="translate(312,510)"
      id="g41">
     <rect
        class="node"
@@ -399,7 +404,7 @@
        style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-size:13px;line-height:normal;font-family:ui-sans-serif, system-ui, '-apple-system', BlinkMacSystemFont, 'Segoe UI', sans-serif">net</text>
   </g>
   <g
-     transform="translate(854,210)"
+     transform="translate(934,210)"
      id="g43">
     <rect
        class="node"
@@ -432,4 +437,10 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
+  <path
+     class="arrow amber"
+     marker-end="url(#arrowAmber)"
+     d="M 1018,358 V 286"
+     id="path5"
+     sodipodi:nodetypes="cc" />
 </svg>

@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/iShape-Rust/iTriangle/branch/main/graph/badge.svg)](https://codecov.io/gh/iShape-Rust/iTriangle)
 [![license](https://img.shields.io/crates/l/i_triangle.svg)](https://crates.io/crates/i_triangle)
 
-iTriangle is a high-performance 2D polygon triangulation library for Rust. It solves robust triangulation for real-world, messy input (holes, self-intersections, mixed winding) and is built for GIS/CAD, simulation, and rendering pipelines that need deterministic results.
+iTriangle is a high-performance 2D polygon triangulation library for Rust. It turns real-world polygon input into triangle meshes, including shapes with holes, self-intersections, and mixed winding. The public API accepts `f32`/`f64` floating-point data and `i16`/`i32`/`i64` integer data, while the triangulation pipeline runs through a deterministic integer core for stable, reproducible output.
 
 *For detailed performance benchmarks, check out the* [Performance Comparison](https://ishape-rust.github.io/iShape-js/triangle/performance/performance.html)
 
@@ -17,6 +17,7 @@ iTriangle is a high-performance 2D polygon triangulation library for Rust. It so
 
 - [Why iTriangle?](#why-itriangle)
 - [Features](#features)
+- [Data Types and Solvers](#data-types-and-solvers)
 - [Architecture Overview](#architecture-overview)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
@@ -29,10 +30,10 @@ iTriangle is a high-performance 2D polygon triangulation library for Rust. It so
 
 ## Why iTriangle?
 
-- Robust on complex input: supports holes and self-intersections with automatic resolution.
-- Deterministic and stable: integer-based core avoids floating-point corner cases.
-- High-performance: optimized sweep-line triangulation with cache-friendly outputs.
-- Flexible outputs: Delaunay, convex decomposition, tessellation, and centroid nets.
+- Robust on complex input: supports holes, self-intersections, degenerate edges, and mixed winding.
+- Deterministic core: geometry is processed with integer math, avoiding many floating-point corner cases.
+- Flexible numeric model: use `f32`/`f64` input or work directly with `i16`/`i32`/`i64` integer coordinates.
+- Mesh-ready outputs: triangles, Delaunay meshes, convex decomposition, tessellation, and centroid nets.
 
 ## Features
 
@@ -44,6 +45,16 @@ iTriangle is a high-performance 2D polygon triangulation library for Rust. It so
 - **Centroidal Polygon Net**: Build per-vertex dual polygons using triangle centers and edge midpoints.
 - **Steiner Points**: Add custom inner points to influence triangulation.
 - **GPU-Friendly Layout**: Triangles and vertices are naturally ordered by X due to the sweep-line algorithm, improving cache locality for rendering.
+
+## Data Types and Solvers
+
+iTriangle is designed around a deterministic integer core:
+
+- Floating-point APIs accept `f32` and `f64` compatible point types, then map them into integer coordinates before triangulation.
+- Integer APIs work directly with `i16`, `i32`, or `i64` coordinates when your geometry is already quantized.
+- `i32` is the default integer coordinate type for floating-point input.
+- `i64` is useful for larger coordinate ranges or finer fixed precision.
+- `i16` can be useful for compact, bounded datasets where memory and cache behavior matter.
 
 ## Architecture Overview
 

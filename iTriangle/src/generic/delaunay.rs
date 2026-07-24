@@ -1,6 +1,6 @@
 use crate::advanced::buffer::DelaunayBuffer;
 use crate::advanced::delaunay::IntDelaunay;
-use crate::float::triangulation::{RawTriangulation, Triangulation};
+use crate::generic::triangulation::{RawTriangulation, Triangulation};
 use crate::int::triangulation::IndexType;
 use alloc::vec::Vec;
 use i_overlay::i_float::adapter::FloatPointAdapter;

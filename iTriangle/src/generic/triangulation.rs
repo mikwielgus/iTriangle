@@ -175,7 +175,7 @@ impl<P, I: IndexType> Triangulation<P, I> {
 
 #[cfg(test)]
 mod tests {
-    use crate::float::triangulator::Triangulator;
+    use crate::generic::triangulator::Triangulator;
 
     #[test]
     fn test_0() {

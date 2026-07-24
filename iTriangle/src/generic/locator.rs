@@ -7,7 +7,7 @@ use i_overlay::{i_float::adapter::FloatPointAdapter, i_shape::float::adapter::Pa
 
 use crate::int::locator::IntPointInTriangulationLocator;
 use crate::{
-    float::triangulation::Triangulation, int::triangulation::IndexType,
+    generic::triangulation::Triangulation, int::triangulation::IndexType,
     location::PointLocationInTriangulation,
 };
 
@@ -60,7 +60,7 @@ mod tests {
     use alloc::vec;
 
     use crate::{
-        float::triangulation::Triangulation,
+        generic::triangulation::Triangulation,
         location::{PointLocationInTriangulation, TriangleIndex},
     };
 

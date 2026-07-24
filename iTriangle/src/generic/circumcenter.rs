@@ -1,4 +1,4 @@
-use crate::float::delaunay::Delaunay;
+use crate::generic::delaunay::Delaunay;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_float::int::number::wide_int::WideIntNumber;

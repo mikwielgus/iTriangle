@@ -6,7 +6,9 @@ use i_key_sort::sort::key::SortKey;
 use i_overlay::core::solver::Solver;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::int::number::int::IntNumber;
+use i_overlay::i_float::int::point::IntPoint;
 use i_overlay::i_shape::flat::buffer::FlatContoursBuffer;
+use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
 use i_overlay::i_shape::source::resource::ShapeResource;
 use i_tree::{Expiration, LayoutNumber};
 
@@ -218,5 +220,35 @@ where
 
         self.flat_buffer = Some(flat_buffer);
         self.int_buffer = Some(int_buffer);
+    }
+
+    /// Triangulates an integer contour and returns points as [`IntPoint`]s.
+    #[inline]
+    pub fn triangulate_contour(&mut self, contour: &IntContour<I>) -> Triangulation<IntPoint<I>, N> {
+        let t = self.int_triangulator.triangulate_contour(contour);
+        Triangulation {
+            points: t.points,
+            indices: t.indices,
+        }
+    }
+
+    /// Triangulates an integer shape and returns points as [`IntPoint`]s.
+    #[inline]
+    pub fn triangulate_shape(&mut self, shape: &IntShape<I>) -> Triangulation<IntPoint<I>, N> {
+        let t = self.int_triangulator.triangulate_shape(shape);
+        Triangulation {
+            points: t.points,
+            indices: t.indices,
+        }
+    }
+
+    /// Triangulates integer shapes and returns points as [`IntPoint`]s.
+    #[inline]
+    pub fn triangulate_shapes(&mut self, shapes: &IntShapes<I>) -> Triangulation<IntPoint<I>, N> {
+        let t = self.int_triangulator.triangulate_shapes(shapes);
+        Triangulation {
+            points: t.points,
+            indices: t.indices,
+        }
     }
 }

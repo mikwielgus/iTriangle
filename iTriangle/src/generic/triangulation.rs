@@ -13,7 +13,7 @@ use i_overlay::i_shape::util::reserve::Reserve;
 ///
 /// # Parameters
 /// - `A`: Point adapter (e.g. [`i_overlay::i_float::adapter::FloatPointAdapter`]
-///   or [`crate::generic::adapter::IdentityAdapter`])
+///   or [`crate::generic::adapter::IntPointAdapter`])
 pub struct RawTriangulation<A: PointAdapter> {
     pub raw: RawIntTriangulation<A::Int>,
     pub adapter: A,
@@ -30,6 +30,11 @@ pub struct Triangulation<P, I = u16> {
 }
 
 impl<A: PointAdapter> RawTriangulation<A> {
+    #[inline]
+    pub fn new(raw: RawIntTriangulation<A::Int>, adapter: A) -> Self {
+        Self { raw, adapter }
+    }
+
     /// Returns the adapter-mapped points used in the triangulation.
     ///
     /// The points are guaranteed to match the input shape geometry within adapter precision.

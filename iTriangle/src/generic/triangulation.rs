@@ -19,9 +19,9 @@ pub struct RawTriangulation<A: PointAdapter> {
     pub adapter: A,
 }
 
-/// A flat triangulation result consisting of float points and triangle indices.
+/// A flat triangulation result consisting of points and triangle indices.
 ///
-/// Useful for rendering, exporting, or post-processing the mesh in float space.
+/// Useful for rendering, exporting, or post-processing the mesh.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Triangulation<P, I = u16> {

@@ -20,7 +20,7 @@ use i_tree::{Expiration, LayoutNumber};
 ///
 /// # Implemented For
 /// - `[P]` / `[Contour<P>]` / `[Shape<P>]` (float)
-/// - [`IntContour`] / [`IntShape`] / [`IntShapes`] (integer, identity adapter)
+/// - [`IntContour`] / [`IntShape`] / [`IntShapes`] (integer, [`IntPointAdapter`])
 pub trait Triangulatable<P> {
     type Adapter: PointAdapter<Point = P>;
 

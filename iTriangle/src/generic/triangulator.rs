@@ -12,7 +12,7 @@ use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
 use i_overlay::i_shape::source::resource::ShapeResource;
 use i_tree::{Expiration, LayoutNumber};
 
-/// A reusable triangulator that converts float-based shapes into triangle meshes.
+/// A reusable triangulator that converts shapes into triangle meshes.
 pub struct Triangulator<N = u16, I = i32>
 where
     I: IntNumber + Expiration + LayoutNumber + SortKey,

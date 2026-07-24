@@ -1,14 +1,16 @@
+use crate::generic::adapter::PointAdapter;
 use crate::generic::triangulation::RawTriangulation;
 use crate::int::triangulatable::IntTriangulatable;
 use crate::int::triangulation::RawIntTriangulation;
+use alloc::vec::Vec;
 use i_key_sort::sort::key::SortKey;
 use i_overlay::i_float::adapter::FloatPointAdapter;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::rect::FloatRect;
 use i_overlay::i_float::int::number::int::IntNumber;
 use i_overlay::i_shape::base::data::{Contour, Shape};
-use i_overlay::i_shape::float::adapter::{PathToInt, ShapeToInt, ShapesToInt};
 use i_overlay::i_shape::float::rect::RectInit;
+use i_overlay::i_shape::int::shape::{IntContour, IntShape, IntShapes};
 use i_tree::{Expiration, LayoutNumber};
 
 /// A trait for triangulating float-based geometry with default validation.
@@ -36,12 +38,18 @@ pub trait Triangulatable<P: FloatPointCompatible> {
     /// Triangulates the shape(s) and inserts the given Steiner points.
     ///
     /// Points must lie strictly within the interior of the geometry.
-    fn triangulate_with_steiner_points(&self, points: &[P]) -> RawTriangulation<FloatPointAdapter<P, i32>> {
+    fn triangulate_with_steiner_points(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<FloatPointAdapter<P, i32>> {
         self.triangulate_with_steiner_points_as::<i32>(points)
     }
 
     /// Triangulates the shape(s) with Steiner points using the requested integer coordinate type.
-    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<FloatPointAdapter<P, I>>
+    fn triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<FloatPointAdapter<P, I>>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey;
 }
@@ -56,7 +64,8 @@ where
     {
         if let Some(rect) = FloatRect::with_path(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let raw = self.to_int(&adapter).triangulate();
+            let int_contour: IntContour<I> = adapter.points_to_int(self);
+            let raw = int_contour.triangulate();
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {
@@ -66,16 +75,18 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<FloatPointAdapter<P, I>>
+    fn triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<FloatPointAdapter<P, I>>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
         if let Some(rect) = FloatRect::with_path(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let float_points = points.to_int(&adapter);
-            let raw = self
-                .to_int(&adapter)
-                .triangulate_with_steiner_points(&float_points);
+            let int_points = adapter.points_to_int(points);
+            let int_contour: IntContour<I> = adapter.points_to_int(self);
+            let raw = int_contour.triangulate_with_steiner_points(&int_points);
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {
@@ -96,7 +107,8 @@ where
     {
         if let Some(rect) = FloatRect::with_paths(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let raw = self.to_int(&adapter).triangulate();
+            let int_shape: IntShape<I> = self.iter().map(|c| adapter.points_to_int(c)).collect();
+            let raw = int_shape.triangulate();
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {
@@ -106,16 +118,18 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<FloatPointAdapter<P, I>>
+    fn triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<FloatPointAdapter<P, I>>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
         if let Some(rect) = FloatRect::with_paths(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let float_points = points.to_int(&adapter);
-            let raw = self
-                .to_int(&adapter)
-                .triangulate_with_steiner_points(&float_points);
+            let int_points = adapter.points_to_int(points);
+            let int_shape: IntShape<I> = self.iter().map(|c| adapter.points_to_int(c)).collect();
+            let raw = int_shape.triangulate_with_steiner_points(&int_points);
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {
@@ -136,7 +150,11 @@ where
     {
         if let Some(rect) = FloatRect::with_list_of_paths(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let raw = self.to_int(&adapter).triangulate();
+            let int_shapes: IntShapes<I> = self
+                .iter()
+                .map(|shape| shape.iter().map(|c| adapter.points_to_int(c)).collect())
+                .collect();
+            let raw = int_shapes.triangulate();
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {
@@ -146,16 +164,21 @@ where
         }
     }
 
-    fn triangulate_with_steiner_points_as<I>(&self, points: &[P]) -> RawTriangulation<FloatPointAdapter<P, I>>
+    fn triangulate_with_steiner_points_as<I>(
+        &self,
+        points: &[P],
+    ) -> RawTriangulation<FloatPointAdapter<P, I>>
     where
         I: IntNumber + Expiration + LayoutNumber + SortKey,
     {
         if let Some(rect) = FloatRect::with_list_of_paths(self) {
             let adapter = FloatPointAdapter::<P, I>::new(rect);
-            let float_points = points.to_int(&adapter);
-            let raw = self
-                .to_int(&adapter)
-                .triangulate_with_steiner_points(&float_points);
+            let int_points = adapter.points_to_int(points);
+            let int_shapes: IntShapes<I> = self
+                .iter()
+                .map(|shape| shape.iter().map(|c| adapter.points_to_int(c)).collect())
+                .collect();
+            let raw = int_shapes.triangulate_with_steiner_points(&int_points);
             RawTriangulation { raw, adapter }
         } else {
             RawTriangulation {

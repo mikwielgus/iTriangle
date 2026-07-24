@@ -110,7 +110,7 @@ where
         self.int_triangulator
             .triangulate_flat_into(&mut flat_buffer, &mut int_buffer);
 
-        let triangulation = int_buffer.to_float(&adapter);
+        let triangulation = int_buffer.to_adapted(&adapter);
 
         self.flat_buffer = Some(flat_buffer);
         self.int_buffer = Some(int_buffer);
@@ -175,7 +175,7 @@ where
         self.int_triangulator
             .uncheck_triangulate_flat_into(&flat_buffer, &mut int_buffer);
 
-        let triangulation = int_buffer.to_float(&adapter);
+        let triangulation = int_buffer.to_adapted(&adapter);
 
         self.flat_buffer = Some(flat_buffer);
         self.int_buffer = Some(int_buffer);

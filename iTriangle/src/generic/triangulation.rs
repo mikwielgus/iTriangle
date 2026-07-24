@@ -1,7 +1,6 @@
 use crate::generic::adapter::PointAdapter;
 use crate::int::triangulation::{IndexType, IntTriangulation, RawIntTriangulation};
 use alloc::vec::Vec;
-use i_overlay::i_float::adapter::FloatPointAdapter;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
 use i_overlay::i_float::int::number::int::IntNumber;
@@ -13,7 +12,8 @@ use i_overlay::i_shape::util::reserve::Reserve;
 /// and maps results back to user-provided point types via a [`PointAdapter`].
 ///
 /// # Parameters
-/// - `A`: Point adapter (e.g. [`FloatPointAdapter`] or [`crate::generic::adapter::IdentityAdapter`])
+/// - `A`: Point adapter (e.g. [`i_overlay::i_float::adapter::FloatPointAdapter`]
+///   or [`crate::generic::adapter::IdentityAdapter`])
 pub struct RawTriangulation<A: PointAdapter> {
     pub raw: RawIntTriangulation<A::Int>,
     pub adapter: A,
@@ -64,18 +64,16 @@ impl<P, N: IndexType> Triangulation<P, N> {
     }
 
     #[inline]
-    pub fn set_with_int<I: IntNumber>(
+    pub fn set_with_int<A: PointAdapter<Point = P>>(
         &mut self,
-        triangulation: &IntTriangulation<I, N>,
-        adapter: &FloatPointAdapter<P, I>,
-    ) where
-        P: FloatPointCompatible,
-    {
+        triangulation: &IntTriangulation<A::Int, N>,
+        adapter: &A,
+    ) {
         self.points.clear();
         self.points
             .reserve_capacity(triangulation.points.capacity());
         self.points
-            .extend(triangulation.points.iter().map(|p| adapter.int_to_float(p)));
+            .extend(triangulation.points.iter().map(|p| adapter.from_int_point(p)));
 
         self.indices.clear();
         self.indices.extend_from_slice(&triangulation.indices);
@@ -84,14 +82,11 @@ impl<P, N: IndexType> Triangulation<P, N> {
 
 impl<I: IntNumber, N: IndexType> IntTriangulation<I, N> {
     #[inline]
-    pub fn into_float<P: FloatPointCompatible>(
-        self,
-        adapter: &FloatPointAdapter<P, I>,
-    ) -> Triangulation<P, N> {
+    pub fn into_adapted<A: PointAdapter<Int = I>>(self, adapter: &A) -> Triangulation<A::Point, N> {
         let points = self
             .points
             .iter()
-            .map(|p| adapter.int_to_float(p))
+            .map(|p| adapter.from_int_point(p))
             .collect();
         Triangulation {
             points,
@@ -100,14 +95,11 @@ impl<I: IntNumber, N: IndexType> IntTriangulation<I, N> {
     }
 
     #[inline]
-    pub fn to_float<P: FloatPointCompatible>(
-        &self,
-        adapter: &FloatPointAdapter<P, I>,
-    ) -> Triangulation<P, N> {
+    pub fn to_adapted<A: PointAdapter<Int = I>>(&self, adapter: &A) -> Triangulation<A::Point, N> {
         let points = self
             .points
             .iter()
-            .map(|p| adapter.int_to_float(p))
+            .map(|p| adapter.from_int_point(p))
             .collect();
         Triangulation {
             points,

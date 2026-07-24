@@ -1,22 +1,22 @@
+use crate::generic::adapter::PointAdapter;
 use crate::int::triangulation::{IndexType, IntTriangulation, RawIntTriangulation};
 use alloc::vec::Vec;
 use i_overlay::i_float::adapter::FloatPointAdapter;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
 use i_overlay::i_float::int::number::int::IntNumber;
-use i_overlay::i_shape::float::adapter::PathToFloat;
 use i_overlay::i_shape::util::reserve::Reserve;
 
-/// A triangulation result based on integer computation, with float mapping.
+/// A triangulation result based on integer computation, with point mapping.
 ///
-/// Internally uses an [`Triangulation`] for performance and robustness,
-/// and maps results back to user-provided float types via a [`FloatPointAdapter`].
+/// Internally uses a [`RawIntTriangulation`] for performance and robustness,
+/// and maps results back to user-provided point types via a [`PointAdapter`].
 ///
 /// # Parameters
-/// - `P`: Float point type (e.g., `Vec2`, `[f32; 2]`, etc.)
-pub struct RawTriangulation<P: FloatPointCompatible, I: IntNumber = i32> {
-    pub raw: RawIntTriangulation<I>,
-    pub adapter: FloatPointAdapter<P, I>,
+/// - `A`: Point adapter (e.g. [`FloatPointAdapter`] or [`crate::generic::adapter::IdentityAdapter`])
+pub struct RawTriangulation<A: PointAdapter> {
+    pub raw: RawIntTriangulation<A::Int>,
+    pub adapter: A,
 }
 
 /// A flat triangulation result consisting of float points and triangle indices.
@@ -29,13 +29,13 @@ pub struct Triangulation<P, I = u16> {
     pub indices: Vec<I>,
 }
 
-impl<P: FloatPointCompatible, I: IntNumber> RawTriangulation<P, I> {
-    /// Returns the float-mapped points used in the triangulation.
+impl<A: PointAdapter> RawTriangulation<A> {
+    /// Returns the adapter-mapped points used in the triangulation.
     ///
     /// The points are guaranteed to match the input shape geometry within adapter precision.
     #[inline]
-    pub fn points(&self) -> Vec<P> {
-        self.raw.points.to_float(&self.adapter)
+    pub fn points(&self) -> Vec<A::Point> {
+        self.adapter.points_from_int(&self.raw.points)
     }
 
     /// Returns the triangle indices for the mesh, ordered counter-clockwise.
@@ -46,7 +46,7 @@ impl<P: FloatPointCompatible, I: IntNumber> RawTriangulation<P, I> {
 
     /// Converts this flat triangulation into a flat [`Triangulation`] (points + indices).
     #[inline]
-    pub fn to_triangulation<N: IndexType>(&self) -> Triangulation<P, N> {
+    pub fn to_triangulation<N: IndexType>(&self) -> Triangulation<A::Point, N> {
         Triangulation {
             indices: self.triangle_indices(),
             points: self.points(),
